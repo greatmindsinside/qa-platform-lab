@@ -1,138 +1,242 @@
-# QA Platform Lab — Portfolio Design
+# QA Platform Lab — Quest Deck Portfolio Design
 
 **Date:** 2026-07-19  
-**Status:** Approved for planning (Approach 1 — B2B SaaS mini-app + owned test system)  
+**Status:** Approved for planning  
 **Repo:** [greatmindsinside/qa-platform-lab](https://github.com/greatmindsinside/qa-platform-lab) (public)  
-**Working name:** `qa-platform-lab`
+**Working name:** `qa-platform-lab`  
+**Product (AUT):** Quest Deck — gamified interview prep
 
 ## Goal
 
-Ship a cloneable portfolio proof that a hiring manager can run in ~5 minutes, demonstrating **cohesive Quality Engineering system ownership** (not isolated tool skills): product under test + layered tests + CI gates + risk-based coverage + cross-layer validation.
+Ship a cloneable portfolio proof a hiring manager can run in ~5 minutes, demonstrating **cohesive Quality Engineering system ownership** (product under test + layered tests + CI gates + risk-based coverage + cross-layer validation).
+
+The product under test is also a **real interview-prep tool** the author uses: decks of interview questions, practice sessions, and light RPG progression (XP, levels, titles, streaks).
 
 **Job-search outcomes:**
 
 - Resume / LinkedIn: one system narrative for Senior/Staff QA Automation and Quality Platform roles
-- Interview: 60-second walkthrough (RBAC + UI/API/DB cross-layer + CI artifact)
+- Interview: 60-second walkthrough (RBAC + practice→XP domain rules + UI/API cross-layer + CI artifact)
 - Ongoing side project: MVP in ~1 week, then phased depth
 
 ## Decisions locked
 
-| Topic              | Choice                                                                                         |
-| ------------------ | ---------------------------------------------------------------------------------------------- |
-| Outcome            | **A** — Public portfolio proof (clone, run, understand quickly)                                |
-| Cadence            | **C** — Ongoing side project; MVP linkable in ~1 week, then layers                             |
-| AUT strategy       | **A** — Greenfield mini-product (own the app and the suite)                                    |
-| Product approach   | **1** — Tiny B2B SaaS + owned test system (not SauceDemo wrapper, not test-shell-only)         |
-| Domain             | Team access / projects: login, CRUD projects, invite member, admin-only delete                 |
-| Stack              | React + TypeScript UI; Node + TypeScript API (Fastify or Express); SQLite (Postgres-ready)     |
-| Auth               | Simple session or JWT; roles `admin` \| `member`                                               |
-| Headline proof     | Cross-layer invite + RBAC 403 even if UI bypassed                                              |
-| Out of MVP scope   | Billing, OAuth, email delivery, multi-tenant orgs, Allure, visual, a11y, k6, Pact, QA dashboard, self-healing |
+| Topic | Choice |
+| ----- | ------ |
+| Outcome | Public portfolio proof (clone, run, understand quickly) |
+| Cadence | Ongoing side project; MVP linkable in ~1 week |
+| AUT strategy | Greenfield mini-product (own the app and the suite) |
+| Product | **Quest Deck** — interview prep with RPG-lite progression |
+| Domain | Decks, cards, practice ratings, XP/level/streak; invite mentor; admin-only deck delete |
+| Stack | React + TypeScript UI; Node + TypeScript API (Fastify); SQLite (Postgres-ready) |
+| Auth | JWT bearer; deck membership roles `admin` \| `member` for authz |
+| Headline proof | Cross-layer invite + RBAC 403 on deck delete even if UI bypassed |
+| Engineering | Spec-driven development; strict TypeScript; SOLID layering; DRY shared types; YAGNI; no code smells |
+| Out of MVP scope | AI interviewer, boss fights, spaced-rep scheduler, streak freezes, leaderboards, billing, OAuth, email, multi-org, Allure, visual, a11y, k6, Pact, QA dashboard, self-healing |
+
+## Spec-driven development
+
+1. This document is the **source of truth** for product rules, API shape, quality gates, and non-goals.
+2. The implementation plan must map **1:1** to requirements here; no feature lands without a spec line.
+3. Domain rules (XP, level, streak, RBAC) are specified with exact formulas so unit tests can lock them.
+4. Scope changes: update this spec → update the plan → then implement.
+
+## Gamification philosophy
+
+Grounded in Self-Determination Theory and patterns from successful learning apps (e.g. Duolingo):
+
+| Need | RPG feel | MVP mechanic |
+| ---- | -------- | ------------ |
+| Competence | “I’m getting stronger” | XP, levels, titles, card confidence, deck % solid |
+| Autonomy | “I choose my quest” | Pick deck/card freely; no forced path |
+| Relatedness | “I’m not alone” | Invite mentor/partner as deck member |
+
+**Design rules:**
+
+- One tiny daily practice extends the streak (not a huge session).
+- XP measures effort; confidence rating measures mastery — do not conflate them.
+- Progress is visible on Home (level, title, XP to next level, streak).
+- Respect the user: no dark-pattern punishment beyond a simple streak reset; no paywalls or loot boxes.
+- Keep the loop tiny so the portfolio’s quality system stays the star.
 
 ## Product (AUT)
 
+### Core loop
+
+```
+Choose deck → Draw card → Answer (notes optional) → Rate confidence
+        → Gain XP → Maybe level up / keep streak → See progress
+```
+
+### RPG progression (exact MVP rules)
+
+| Mechanic | Rule |
+| -------- | ---- |
+| Base XP | +10 per practice event |
+| Improve bonus | +5 if new confidence is strictly higher than previous for that user+card (`learning` < `solid` < `mastered`) |
+| First practice | No improve bonus (no previous rating) |
+| Level | `level = floor(totalXp / 100) + 1` |
+| Title | Level 1–2 Apprentice; 3–5 Adventurer; 6–9 Challenger; 10–14 Veteran; 15+ Staff Contender |
+| Streak | Updated **only on practice** (UTC calendar dates as `YYYY-MM-DD`): if `lastPracticeDate` is **today** → streak unchanged; if **yesterday** → `currentStreak + 1`; if **null or older** → `currentStreak = 1`. Then set `lastPracticeDate = today`. MVP does **not** decay the displayed streak on read when a day is missed (stale until next practice); Phase 2 may add read-time decay and/or streak freeze. |
+| Card confidence | `learning` \| `solid` \| `mastered` |
+| Deck progress | Percent of cards in deck where this user’s confidence is `solid` or `mastered` |
+
 ### MVP users and flows
 
-1. Sign in (seeded `admin@lab.local`, `member@lab.local`)
-2. List / create / edit projects (workspaces)
-3. Invite a member to a project (role: admin | member)
-4. Guarded action: only admins can delete a project
+1. Sign in (seeded `admin@lab.local` / `Admin123!`, `member@lab.local` / `Member123!`)
+2. Home: see level, title, XP bar, streak, deck list with % solid
+3. Create / edit decks and cards (admin on that deck)
+4. Practice a card → XP toast → updated profile stats
+5. Invite a member to a deck (role: admin \| member)
+6. Guarded action: only **deck** admins can delete a deck (membership role)
+
+### Seed content (day-1 usefulness)
+
+At least two decks with real QA/SDET prompts, for example:
+
+- Playwright & E2E
+- API testing & authz
+- Behavioral (STAR) — optional third if time
 
 ### Non-goals (product)
 
-No billing, OAuth, real email, fancy UI, or multi-org tenancy. Product exists to create **authz, CRUD, and state** risk for the quality system.
+No AI answers, timers/boss mode, spaced repetition, streak freezes, leaderboards, billing, OAuth, real email, fancy UI, or multi-org tenancy.
+
+## Domain model
+
+| Entity | Responsibility |
+| ------ | -------------- |
+| User | Auth identity + aggregate XP/streak/lastPracticeDate |
+| Deck | Named quest container |
+| DeckMember | project-scoped role (`admin` \| `member`); creator is admin |
+| Card | Interview prompt (+ optional answer hint, tags) |
+| CardProgress | Per-user confidence and practice count |
+| PracticeEvent | Immutable practice record (xp awarded, confidence, timestamp) |
+
+### Pure domain functions (must be unit-tested)
+
+```ts
+canDeleteDeck(membershipRole: Role): boolean
+confidenceRank(c: Confidence): number  // learning=0, solid=1, mastered=2
+xpForPractice(prev: Confidence | null, next: Confidence): number
+levelFromXp(totalXp: number): number
+titleForLevel(level: number): string
+nextStreak(args: { lastPracticeDate: string | null; todayUtc: string; currentStreak: number }): number
+deckMasteryPercent(confidences: Confidence[]): number  // solid|mastered count / length; empty → 0
+```
+
+## API (MVP)
+
+| Method | Path | Behavior |
+| ------ | ---- | -------- |
+| GET | `/api/health` | `{ ok: true }` |
+| POST | `/api/auth/login` | `{ email, password }` → `{ token, user }` |
+| GET | `/api/me` | Profile + `totalXp`, `level`, `title`, `currentStreak` |
+| GET/POST | `/api/decks` | List (member of) / create (creator = deck admin) |
+| PATCH/DELETE | `/api/decks/:id` | Update / delete (delete requires deck admin → else 403) |
+| POST | `/api/decks/:id/invites` | `{ email, role }` (inviter must be deck admin) |
+| GET | `/api/decks/:id/members` | Membership list |
+| GET/POST | `/api/decks/:id/cards` | List / add cards |
+| POST | `/api/cards/:id/practice` | `{ confidence }` → `{ xpAwarded, totalXp, level, title, currentStreak }` |
+
+## UI screens
+
+1. **Sign in** — Email, Password, button “Sign in”
+2. **Home** — heading with progression; deck links
+3. **Deck detail** — cards; “Practice”; admin: invite, add card, “Delete deck”
+4. **Practice** — prompt; rate confidence; show XP result
+
+Accessible labels for E2E: Email, Password, Sign in, deck name fields, confidence controls, Delete deck, Invite.
+
+## Engineering standards
+
+| Principle | Rule |
+| --------- | ---- |
+| TypeScript | `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`; no `any`; narrow before assert |
+| S | One module, one reason to change |
+| O | Extend via new pure functions / small modules |
+| L | Domain types at boundaries; no SQLite leakage past data layer |
+| I | Small stores (`UserStore`, `DeckStore`, `ProgressStore`) |
+| D | `buildApp` composition root; inject DB path for tests |
+| DRY | `@lab/shared` owns `Role`, `Confidence`, `SEED_USERS`, DTOs |
+| YAGNI | No DI container, ORM, CQRS, AI |
+| No smells | No circular imports; no XP in React; no global-role delete; no god files; no silent product catches |
+
+**Layers:** `domain` → `data` → `application` → `http` · Web UI has its own thin client (does not import `@lab/testkit`).
 
 ## Test architecture
 
-### Layers
-
-| Layer       | Tool                         | Proves                                      |
-| ----------- | ---------------------------- | ------------------------------------------- |
-| Unit        | Vitest                       | Domain rules (roles, validation) without HTTP |
-| API         | Playwright `request` or Vitest + fetch | Auth, CRUD, 403 authz, schema       |
-| E2E         | Playwright UI                | Critical journeys only                      |
-| Cross-layer | Hybrid specs                 | UI action → API and/or DB assert            |
+| Layer | Tool | Proves |
+| ----- | ---- | ------ |
+| Unit | Vitest | Domain rules (XP, level, streak, RBAC, mastery %) |
+| API | Playwright request + Vitest inject | Auth, CRUD, practice XP, 403 delete |
+| E2E | Playwright UI | Login + one practice journey |
+| Cross-layer | Hybrid | UI invite → GET members confirms role |
 
 ### Week-1 MVP (must ship)
 
-1. Seeded admin + member accounts
-2. Fixtures: `asAdmin`, `asMember` (API + UI)
-3. Tags: `@smoke` `@auth` `@rbac` `@mutation`
-4. Specs:
-   - Login happy path + bad password
-   - Create project (API + one UI path)
-   - RBAC: member delete → 403; admin delete → 204 + row gone
-   - One cross-layer invite: UI invite → GET membership → DB/API confirms role
+1. Seeded admin + member; seeded QA decks/cards
+2. Fixtures: `asAdmin`, `asMember`
+3. Tags: `@smoke` `@auth` `@rbac` `@mutation` `@progression`
+4. Specs: login happy/bad; create deck; practice awards XP; member delete → 403 / admin → 204; cross-layer invite
 5. CI: PR = lint + typecheck + unit + `@smoke`; `main` = full suite; HTML report artifact
-6. `docs/quality-architecture.md` — layers, tags, flake policy, explicit non-automated areas
-7. README: one-sentence problem, stack, CI badge, clone → install → `test:smoke` in 5 minutes
+6. `docs/quality-architecture.md` — layers, tags, flake policy, non-goals, layered API note
+7. README: problem, stack, CI badge, clone → install → `test:smoke` in 5 minutes
 
 ### Phase 2 (weeks 2–4)
 
-- AJV/OpenAPI schema on mutating endpoints
-- axe smoke on login + project list
-- Flake quarantine (`@flaky`) + issue template
-- Trace-on-failure + short demo GIF/Loom linked from README
+- Streak freeze; optional spaced repetition; boss-run mode on same cards
+- AJV/OpenAPI on mutating endpoints; axe smoke; `@flaky` quarantine; demo GIF/Loom
 
 ### Phase 3 (ongoing)
 
-- Tiny QA ops page (last CI run, failures by tag)
-- Optional k6 smoke on auth + list projects
-- Contract tests if UI/API packages split
-- Postgres swap + migration tests
-
-### Explicitly deferred (peer-saturated / low early ROI)
-
-Self-healing locators, agentic MCP demos, SauceDemo/ReqRes-only frameworks, kitchen-sink Allure+visual+k6+Pact in week 1.
+- Tiny QA ops page; optional k6; Postgres + migration tests; contract tests if packages split further
 
 ## Repo shape
 
 ```
-apps/api/                 # Fastify/Express + SQLite
-apps/web/                 # React UI
-packages/testkit/         # shared fixtures, seed, clients
+apps/api/                 # Fastify + SQLite (domain → data → application → http)
+apps/web/                 # React + TypeScript UI (Quest Deck)
+packages/shared/          # Role, Confidence, DTOs, SEED_USERS
+packages/testkit/         # ApiClient; re-exports shared
 tests/unit/
 tests/api/
 tests/e2e/
 tests/cross-layer/
 docs/quality-architecture.md
-docs/demo.md              # 60-second interview script + commands
+docs/demo.md
 .github/workflows/ci.yml
 README.md
 ```
 
 ## CI gates
 
-| Trigger | Jobs                                      | Pass rule                          |
-| ------- | ----------------------------------------- | ---------------------------------- |
-| PR      | lint, typecheck, unit, Playwright `@smoke` | Must be green to merge            |
-| `main`  | full API + E2E + cross-layer              | Public CI badge tracks `main`      |
-| Failure | Playwright HTML report + traces           | Linked from Actions run            |
+| Trigger | Jobs | Pass rule |
+| ------- | ---- | --------- |
+| PR | lint, typecheck, unit, Playwright `@smoke` | Must be green to merge |
+| `main` | full API + E2E + cross-layer | Public CI badge tracks `main` |
+| Failure | Playwright HTML report + traces | Linked from Actions run |
 
-PR smoke target: under ~2 minutes. Document expected full-suite time in README.
+PR smoke target: under ~2 minutes.
 
 ## Job-search packaging
 
-1. Pin public repo on GitHub; feature on LinkedIn
-2. Resume bullet (system, not tool list):  
-   *Designed and owned a full-stack TypeScript quality system (unit → API → E2E → UI/API/DB cross-layer) with RBAC risk coverage and PR smoke gates for a sample B2B SaaS.*
-3. Interview script: product risk → pyramid → RBAC 403 → cross-layer invite → CI artifact
+1. Pin public repo; feature on LinkedIn
+2. Resume bullet:  
+   *Designed and owned a full-stack TypeScript quality system (unit → API → E2E → cross-layer) with RBAC and progression-rule coverage for a gamified interview-prep app.*
+3. Interview script: product risk → pyramid → practice XP unit tests → RBAC 403 → cross-layer invite → CI artifact → “I use this to prep”
 4. Do **not** list Playwright / CI / API as separate skill projects
 5. Do **not** claim this lab as employer production work
-6. Private `job-application-copilot` remains a separate talking point for real-system scale when asked
-
-## Peer-portfolio context (why this shape)
-
-Most peer SDET repos wrap SauceDemo/ReqRes with POM + CI + Allure. That is table stakes. Owning the AUT plus cross-layer and RBAC proof differentiates toward Senior/Staff and Quality Platform narratives aligned with Lawson’s target roles (QA Automation, SDET, Quality Platform / Test Infrastructure).
 
 ## Success criteria
 
-- [ ] Stranger can clone and run `@smoke` in ≤5 minutes with documented Node version
+- [ ] Author can run a real prep session on seeded QA decks
+- [ ] Practice updates XP, level/title, and streak on Home
+- [ ] Stranger can clone and run `@smoke` in ≤5 minutes (documented Node version)
 - [ ] CI badge green on `main`
 - [ ] At least one RBAC and one cross-layer test visible in report
 - [ ] `docs/quality-architecture.md` explains the system in one sitting
-- [ ] Resume/LinkedIn link uses the system bullet above
+- [ ] Resume/LinkedIn uses the system bullet above
 
 ## Implementation boundary
 
-Implement in **this** repository. Keep personal job-search tooling (`job-application-copilot`) separate; it may remain a private talking point for real-system scale in interviews.
+Implement in **this** repository. Keep personal job-search tooling (`job-application-copilot`) separate.
