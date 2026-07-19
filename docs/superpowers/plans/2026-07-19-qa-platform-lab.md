@@ -1,23 +1,28 @@
-# QA Platform Lab (Week-1 MVP) Implementation Plan
+# Quest Deck (Week-1 MVP) Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Create a new public monorepo `qa-platform-lab` with a tiny B2B projects SaaS plus unit/API/E2E/cross-layer tests, PR smoke CI, and portfolio docs a hiring manager can clone and run in ≤5 minutes.
+**Goal:** Build Quest Deck so it does two jobs at once: (1) a prep tool the author actually uses for QA/SDET interviews, and (2) a portfolio quality system hiring managers can clone and run in ≤5 minutes.
 
-**Architecture:** Yarn workspaces monorepo: `apps/api` (Fastify + better-sqlite3 + JWT bearer auth), `apps/web` (Vite + React), `packages/testkit` (seed credentials + typed API helpers), root `tests/` for Vitest unit and Playwright API/E2E/cross-layer. Product risk centers on RBAC delete and invite membership; quality system proves those risks across layers.
+**Architecture:** Yarn workspaces with strict TypeScript. `@lab/shared` owns types and seed credentials. `apps/api` uses domain → data → application → http; pure functions own XP/level/streak/RBAC. `apps/web` is a thin React client. `packages/testkit` provides `ApiClient`. Root `tests/` holds Vitest + Playwright. Spec is source of truth: `docs/superpowers/specs/2026-07-19-qa-platform-lab-portfolio-design.md`.
 
-**Tech Stack:** Node 22+, TypeScript 5, Fastify 5, better-sqlite3, jose (JWT), Vite 6, React 19, Vitest, Playwright, ESLint, GitHub Actions
+**Tech Stack:** Node 22+, TypeScript 5 (strict), Fastify 5, better-sqlite3, jose, Vite 6, React 19, Vitest, Playwright, ESLint, GitHub Actions
 
 ## Global Constraints
 
-- Spec: `docs/superpowers/specs/2026-07-19-qa-platform-lab-portfolio-design.md`
-- Repo root: `C:/Users/great/Desktop/qa-platform-lab` (https://github.com/greatmindsinside/qa-platform-lab)
-- Node **≥ 22**; package manager **yarn 1** (classic) for familiarity
-- Seed passwords are public demo secrets only: `admin@lab.local` / `Admin123!` and `member@lab.local` / `Member123!`
-- Never auto-submit anything external; this app has no third-party apply flows
-- MVP out of scope: Allure, axe, visual, k6, Pact, OAuth, email, Postgres, QA dashboard, self-healing
-- Commit implementation steps only when the user explicitly asks to commit
+- Spec: `docs/superpowers/specs/2026-07-19-qa-platform-lab-portfolio-design.md` (1:1 coverage required)
+- **Dual north star:** every task must serve interview prep usefulness *and* the job-portfolio quality narrative — if only one is true, stop and redesign
+- Repo root (already exists): `C:/Users/great/Desktop/Code/portfilo-qa/qa-platform-lab`
+- Node **≥ 22**; package manager **yarn 1** (classic)
+- Seed passwords: `admin@lab.local` / `Admin123!` and `member@lab.local` / `Member123!`
+- Seed **three** decks (≥4 cards each): Playwright & E2E, API testing & authz, Behavioral (STAR)
+- Deck delete authz uses **membership role**, not global `users.role`
+- Progression formulas must match the spec exactly (XP +10 / +5 improve; level `floor(xp/100)+1`; titles; streak UTC rules)
+- Practice UI must support **Show hint** (`answerHint`) so solo prep is useful
+- MVP out of scope: AI, boss fights, spaced-rep, streak freezes, leaderboards, OAuth, email, Postgres, Allure, axe, k6, Pact
+- Commit only when the user explicitly asks
 - Prefer role/label Playwright locators over CSS
+- No `any`; no XP math in React; no circular imports; web must not import `@lab/testkit`
 
 ---
 
@@ -25,44 +30,46 @@
 
 | Path | Responsibility |
 | ---- | -------------- |
-| `package.json` | Workspaces root; scripts `dev`, `test:unit`, `test:smoke`, `test:all`, `typecheck`, `lint` |
-| `tsconfig.base.json` | Shared strict TS options |
-| `.gitignore` | `node_modules`, `dist`, `test-results`, `playwright-report`, `*.db` |
-| `apps/api/package.json` | API package |
-| `apps/api/src/domain/rbac.ts` | Pure `canDeleteProject(role)` |
-| `apps/api/src/db.ts` | SQLite schema + open connection |
-| `apps/api/src/seed.ts` | Idempotent seed users |
-| `apps/api/src/auth.ts` | Password hash verify, JWT sign/verify |
-| `apps/api/src/routes/*.ts` | `/auth/login`, `/projects`, invite, delete |
-| `apps/api/src/server.ts` | Fastify app factory `buildApp()` + listen |
-| `apps/web/` | Vite React UI: Login, ProjectList, ProjectDetail |
-| `packages/testkit/src/index.ts` | `SEED_USERS`, `ApiClient`, `resetDatabase()` helper |
-| `tests/unit/rbac.test.ts` | Domain unit tests |
-| `tests/api/*.spec.ts` | Playwright request tests |
-| `tests/e2e/*.spec.ts` | UI journeys |
-| `tests/cross-layer/invite.spec.ts` | UI invite + API assert |
-| `playwright.config.ts` | Projects: api, e2e, cross-layer; grep tags |
-| `.github/workflows/ci.yml` | PR smoke vs main full |
+| `package.json` | Workspaces root + scripts |
+| `tsconfig.base.json` | Shared strict TS |
+| `packages/shared/src/index.ts` | `Role`, `Confidence`, DTOs, `SEED_USERS` |
+| `apps/api/src/domain/rbac.ts` | `canDeleteDeck` |
+| `apps/api/src/domain/progression.ts` | XP, level, title, streak, mastery % |
+| `apps/api/src/data/db.ts` | open + migrate only |
+| `apps/api/src/data/user-store.ts` | User persistence |
+| `apps/api/src/data/deck-store.ts` | Deck, members, cards |
+| `apps/api/src/data/progress-store.ts` | CardProgress, PracticeEvent |
+| `apps/api/src/application/*.ts` | Auth, deck, practice services |
+| `apps/api/src/http/*` | password, token, auth-guard, routes, http-error |
+| `apps/api/src/seed.ts` | Users + QA decks/cards |
+| `apps/api/src/app.ts` | Composition root |
+| `apps/web/src/` | Login, Home, DeckDetail, Practice |
+| `packages/testkit/src/index.ts` | `ApiClient` |
+| `tests/unit/*.test.ts` | Domain + inject API |
+| `tests/api|e2e|cross-layer/` | Playwright |
+| `.github/workflows/ci.yml` | PR smoke / main full |
 | `README.md`, `docs/quality-architecture.md`, `docs/demo.md` | Portfolio packaging |
 
 ---
 
-### Task 1: Scaffold new repo + workspaces
+### Task 1: Scaffold workspaces
 
 **Files:**
-- Create: `C:/Users/great/Desktop/qa-platform-lab/` (entire tree listed below)
-- Create: `package.json`, `tsconfig.base.json`, `.gitignore`, `apps/api/package.json`, `apps/web/package.json`, `packages/testkit/package.json`, `README.md` (stub)
+- Create: `package.json`, `tsconfig.base.json`, `.gitignore`
+- Create: `apps/api/package.json`, `apps/web/package.json`, `packages/shared/package.json`, `packages/testkit/package.json`
+- Modify: `README.md` (stub)
 
 **Interfaces:**
-- Produces: yarn workspaces named `@lab/api`, `@lab/web`, `@lab/testkit`
+- Produces: workspaces `@lab/api`, `@lab/web`, `@lab/shared`, `@lab/testkit`
 
-- [ ] **Step 1: Create directory and git init**
+- [ ] **Step 1: Confirm repo**
 
 ```bash
-mkdir -p /c/Users/great/Desktop/qa-platform-lab
-cd /c/Users/great/Desktop/qa-platform-lab
-git init
+cd "C:/Users/great/Desktop/Code/portfilo-qa/qa-platform-lab"
+git status -sb
 ```
+
+Expected: this repo; do not create a second clone.
 
 - [ ] **Step 2: Write root `package.json`**
 
@@ -75,8 +82,8 @@ git init
     "dev:api": "yarn workspace @lab/api dev",
     "dev:web": "yarn workspace @lab/web dev",
     "dev": "yarn dev:api & yarn dev:web",
-    "build": "yarn workspace @lab/api build && yarn workspace @lab/web build",
-    "typecheck": "yarn workspace @lab/api typecheck && yarn workspace @lab/web typecheck && yarn workspace @lab/testkit typecheck",
+    "build": "yarn workspace @lab/shared build && yarn workspace @lab/api build && yarn workspace @lab/web build",
+    "typecheck": "yarn workspace @lab/shared typecheck && yarn workspace @lab/api typecheck && yarn workspace @lab/web typecheck && yarn workspace @lab/testkit typecheck",
     "test:unit": "vitest run",
     "test:smoke": "playwright test --grep @smoke",
     "test:all": "vitest run && playwright test",
@@ -100,11 +107,16 @@ git init
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "noUncheckedIndexedAccess": true,
-    "declaration": true
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
   }
 }
 ```
@@ -122,7 +134,28 @@ blob-report/
 .DS_Store
 ```
 
-- [ ] **Step 4: Stub workspace packages**
+- [ ] **Step 4: Stub packages**
+
+`packages/shared/package.json`:
+
+```json
+{
+  "name": "@lab/shared",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  }
+}
+```
 
 `apps/api/package.json`:
 
@@ -137,126 +170,320 @@ blob-report/
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "start": "node dist/server.js"
-  }
+  },
+  "dependencies": { "@lab/shared": "0.0.1" }
 }
 ```
 
-Mirror minimal `apps/web/package.json` (`@lab/web`) and `packages/testkit/package.json` (`@lab/testkit`) with `"type": "module"` and `typecheck` scripts.
+Mirror `@lab/web` and `@lab/testkit` with `"type": "module"` and `typecheck`; testkit depends on `@lab/shared`.
 
-- [ ] **Step 5: Stub README**
-
-```markdown
-# qa-platform-lab
-
-Owned B2B SaaS sample + risk-based TypeScript quality system (unit → API → E2E → cross-layer).
-
-> Setup instructions land in Task 9. Requires Node 22+.
-```
-
-- [ ] **Step 6: Install**
+- [ ] **Step 5: Install**
 
 ```bash
-cd /c/Users/great/Desktop/qa-platform-lab
 yarn install
 ```
 
-Expected: lockfile created; workspaces linked.
+Expected: lockfile; workspaces linked.
 
-- [ ] **Step 7: Commit only if user asks**
+- [ ] **Step 6: Commit only if user asks**
 
 ---
 
-### Task 2: Domain RBAC (TDD)
+### Task 2: Shared types + domain progression & RBAC (TDD)
 
 **Files:**
-- Create: `apps/api/src/domain/rbac.ts`
-- Create: `apps/api/tsconfig.json`
-- Create: `vitest.config.ts` (repo root)
-- Test: `tests/unit/rbac.test.ts`
+- Create: `packages/shared/src/index.ts`, `packages/shared/tsconfig.json`
+- Create: `apps/api/src/domain/rbac.ts`, `apps/api/src/domain/progression.ts`, `apps/api/tsconfig.json`
+- Create: `vitest.config.ts`
+- Test: `tests/unit/rbac.test.ts`, `tests/unit/progression.test.ts`
 
 **Interfaces:**
 
 ```ts
+// @lab/shared
 export type Role = 'admin' | 'member';
-export function canDeleteProject(role: Role): boolean;
+export type Confidence = 'learning' | 'solid' | 'mastered';
+export const SEED_USERS: readonly SeedUser[];
+export function isRole(value: unknown): value is Role;
+export function isConfidence(value: unknown): value is Confidence;
+
+// domain
+export function canDeleteDeck(membershipRole: Role): boolean;
+export function confidenceRank(c: Confidence): number;
+export function xpForPractice(prev: Confidence | null, next: Confidence): number;
+export function levelFromXp(totalXp: number): number;
+export function titleForLevel(level: number): string;
+export function nextStreak(args: {
+  lastPracticeDate: string | null;
+  todayUtc: string;
+  currentStreak: number;
+}): number;
+export function deckMasteryPercent(confidences: Confidence[]): number;
 ```
 
-- [ ] **Step 1: Write failing test**
+- [ ] **Step 1: Write failing tests**
 
 ```ts
 // tests/unit/rbac.test.ts
 import { describe, expect, it } from 'vitest';
-import { canDeleteProject } from '../../apps/api/src/domain/rbac.js';
+import { canDeleteDeck } from '../../apps/api/src/domain/rbac.js';
 
-describe('canDeleteProject', () => {
-  it('allows admin', () => {
-    expect(canDeleteProject('admin')).toBe(true);
+describe('canDeleteDeck', () => {
+  it('allows deck admin', () => {
+    expect(canDeleteDeck('admin')).toBe(true);
   });
-  it('denies member', () => {
-    expect(canDeleteProject('member')).toBe(false);
+  it('denies deck member', () => {
+    expect(canDeleteDeck('member')).toBe(false);
   });
 });
 ```
 
-- [ ] **Step 2: Run to verify fail**
+```ts
+// tests/unit/progression.test.ts
+import { describe, expect, it } from 'vitest';
+import {
+  confidenceRank,
+  deckMasteryPercent,
+  levelFromXp,
+  nextStreak,
+  titleForLevel,
+  xpForPractice,
+} from '../../apps/api/src/domain/progression.js';
 
-```bash
-cd /c/Users/great/Desktop/qa-platform-lab
-yarn vitest run tests/unit/rbac.test.ts
+describe('xpForPractice', () => {
+  it('awards 10 on first practice', () => {
+    expect(xpForPractice(null, 'learning')).toBe(10);
+  });
+  it('awards 15 when confidence improves', () => {
+    expect(xpForPractice('learning', 'solid')).toBe(15);
+  });
+  it('awards 10 when confidence does not improve', () => {
+    expect(xpForPractice('solid', 'solid')).toBe(10);
+    expect(xpForPractice('mastered', 'learning')).toBe(10);
+  });
+});
+
+describe('levelFromXp / titleForLevel', () => {
+  it('maps xp to level', () => {
+    expect(levelFromXp(0)).toBe(1);
+    expect(levelFromXp(99)).toBe(1);
+    expect(levelFromXp(100)).toBe(2);
+    expect(levelFromXp(250)).toBe(3);
+  });
+  it('maps level to title', () => {
+    expect(titleForLevel(1)).toBe('Apprentice');
+    expect(titleForLevel(3)).toBe('Adventurer');
+    expect(titleForLevel(6)).toBe('Challenger');
+    expect(titleForLevel(10)).toBe('Veteran');
+    expect(titleForLevel(15)).toBe('Staff Contender');
+  });
+});
+
+describe('nextStreak', () => {
+  it('increments when last practice was yesterday', () => {
+    expect(
+      nextStreak({
+        lastPracticeDate: '2026-07-18',
+        todayUtc: '2026-07-19',
+        currentStreak: 3,
+      }),
+    ).toBe(4);
+  });
+  it('unchanged when already practiced today', () => {
+    expect(
+      nextStreak({
+        lastPracticeDate: '2026-07-19',
+        todayUtc: '2026-07-19',
+        currentStreak: 3,
+      }),
+    ).toBe(3);
+  });
+  it('resets to 1 after a gap', () => {
+    expect(
+      nextStreak({
+        lastPracticeDate: '2026-07-10',
+        todayUtc: '2026-07-19',
+        currentStreak: 3,
+      }),
+    ).toBe(1);
+  });
+});
+
+describe('deckMasteryPercent', () => {
+  it('returns 0 for empty', () => {
+    expect(deckMasteryPercent([])).toBe(0);
+  });
+  it('counts solid and mastered', () => {
+    expect(deckMasteryPercent(['learning', 'solid', 'mastered'])).toBeCloseTo(66.666, 0);
+  });
+});
+
+describe('confidenceRank', () => {
+  it('orders learning < solid < mastered', () => {
+    expect(confidenceRank('learning')).toBeLessThan(confidenceRank('solid'));
+    expect(confidenceRank('solid')).toBeLessThan(confidenceRank('mastered'));
+  });
+});
 ```
 
-Expected: FAIL — cannot resolve module / `canDeleteProject` missing.
+- [ ] **Step 2: Run — expect FAIL**
 
-- [ ] **Step 3: Implement**
+```bash
+yarn vitest run tests/unit/rbac.test.ts tests/unit/progression.test.ts
+```
+
+- [ ] **Step 3: Implement shared + domain**
+
+```ts
+// packages/shared/src/index.ts
+export type Role = 'admin' | 'member';
+export type Confidence = 'learning' | 'solid' | 'mastered';
+
+export type SeedUser = {
+  email: string;
+  password: string;
+  role: Role;
+  displayName: string;
+};
+
+export const SEED_USERS = [
+  {
+    email: 'admin@lab.local',
+    password: 'Admin123!',
+    role: 'admin',
+    displayName: 'Lab Admin',
+  },
+  {
+    email: 'member@lab.local',
+    password: 'Member123!',
+    role: 'member',
+    displayName: 'Lab Member',
+  },
+] as const satisfies readonly SeedUser[];
+
+export type PublicUser = {
+  id: number;
+  email: string;
+  role: Role;
+  displayName: string;
+};
+
+export type Deck = {
+  id: number;
+  name: string;
+  description: string;
+  ownerUserId: number;
+  masteryPercent?: number;
+};
+
+export type DeckMember = {
+  deckId: number;
+  userId: number;
+  email: string;
+  role: Role;
+};
+
+export type Card = {
+  id: number;
+  deckId: number;
+  prompt: string;
+  answerHint: string;
+  tags: string[];
+};
+
+export function isRole(value: unknown): value is Role {
+  return value === 'admin' || value === 'member';
+}
+
+export function isConfidence(value: unknown): value is Confidence {
+  return value === 'learning' || value === 'solid' || value === 'mastered';
+}
+```
 
 ```ts
 // apps/api/src/domain/rbac.ts
-export type Role = 'admin' | 'member';
+import type { Role } from '@lab/shared';
 
-export function canDeleteProject(role: Role): boolean {
-  return role === 'admin';
+export function canDeleteDeck(membershipRole: Role): boolean {
+  return membershipRole === 'admin';
 }
 ```
-
-`apps/api/tsconfig.json`:
-
-```json
-{
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "outDir": "dist", "rootDir": "src" },
-  "include": ["src"]
-}
-```
-
-Root `vitest.config.ts`:
 
 ```ts
-import { defineConfig } from 'vitest/config';
+// apps/api/src/domain/progression.ts
+import type { Confidence } from '@lab/shared';
 
-export default defineConfig({
-  test: {
-    include: ['tests/unit/**/*.test.ts'],
-  },
-});
+export function confidenceRank(c: Confidence): number {
+  if (c === 'learning') return 0;
+  if (c === 'solid') return 1;
+  return 2;
+}
+
+export function xpForPractice(prev: Confidence | null, next: Confidence): number {
+  const base = 10;
+  if (prev !== null && confidenceRank(next) > confidenceRank(prev)) {
+    return base + 5;
+  }
+  return base;
+}
+
+export function levelFromXp(totalXp: number): number {
+  return Math.floor(totalXp / 100) + 1;
+}
+
+export function titleForLevel(level: number): string {
+  if (level >= 15) return 'Staff Contender';
+  if (level >= 10) return 'Veteran';
+  if (level >= 6) return 'Challenger';
+  if (level >= 3) return 'Adventurer';
+  return 'Apprentice';
+}
+
+function utcDayBefore(todayUtc: string): string {
+  const d = new Date(`${todayUtc}T00:00:00.000Z`);
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+
+export function nextStreak(args: {
+  lastPracticeDate: string | null;
+  todayUtc: string;
+  currentStreak: number;
+}): number {
+  const { lastPracticeDate, todayUtc, currentStreak } = args;
+  if (lastPracticeDate === todayUtc) return currentStreak;
+  if (lastPracticeDate === utcDayBefore(todayUtc)) return currentStreak + 1;
+  return 1;
+}
+
+export function deckMasteryPercent(confidences: Confidence[]): number {
+  if (confidences.length === 0) return 0;
+  const mastered = confidences.filter((c) => c === 'solid' || c === 'mastered').length;
+  return (mastered / confidences.length) * 100;
+}
 ```
 
-- [ ] **Step 4: Run to verify pass**
+`packages/shared/tsconfig.json` and `apps/api/tsconfig.json` extend base with `outDir`/`rootDir`. Root `vitest.config.ts` includes `tests/unit/**/*.test.ts`.
 
 ```bash
-yarn vitest run tests/unit/rbac.test.ts
+yarn workspace @lab/shared build
 ```
 
-Expected: PASS (2 tests).
+- [ ] **Step 4: Run — expect PASS**
+
+```bash
+yarn vitest run tests/unit/rbac.test.ts tests/unit/progression.test.ts
+```
 
 - [ ] **Step 5: Commit only if user asks**
 
 ---
 
-### Task 3: SQLite schema + seed
+### Task 3: SQLite schema + seed (users + QA decks)
 
 **Files:**
-- Create: `apps/api/src/db.ts`, `apps/api/src/seed.ts`
-- Modify: `apps/api/package.json` (deps: `better-sqlite3`, `bcryptjs`; dev: `@types/better-sqlite3`, `@types/bcryptjs`, `tsx`)
+- Create: `apps/api/src/data/db.ts`, `apps/api/src/http/password.ts`, `apps/api/src/seed.ts`
+- Modify: `apps/api/package.json` (better-sqlite3, bcryptjs, tsx, types)
 - Test: `tests/unit/seed.test.ts`
 
 **Interfaces:**
@@ -266,18 +493,11 @@ export type Db = import('better-sqlite3').Database;
 export function openDb(path?: string): Db;
 export function migrate(db: Db): void;
 export function seed(db: Db): void;
-export const SEED_USERS: {
-  email: string;
-  password: string;
-  role: 'admin' | 'member';
-  displayName: string;
-}[];
 ```
 
-- [ ] **Step 1: Add dependencies**
+- [ ] **Step 1: Add deps**
 
 ```bash
-cd /c/Users/great/Desktop/qa-platform-lab
 yarn workspace @lab/api add better-sqlite3 bcryptjs
 yarn workspace @lab/api add -D @types/better-sqlite3 @types/bcryptjs tsx
 ```
@@ -290,25 +510,36 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { openDb, migrate, seed } from '../../apps/api/src/db.js';
-// If seed is separate, import seed from seed.js and re-export openDb/migrate from db.js
+import { openDb, migrate } from '../../apps/api/src/data/db.js';
+import { seed } from '../../apps/api/src/seed.js';
 
 describe('seed', () => {
   const dbPath = path.join(os.tmpdir(), `lab-seed-${Date.now()}.db`);
   afterEach(() => {
-    try { fs.unlinkSync(dbPath); } catch { /* ignore */ }
+    try {
+      fs.unlinkSync(dbPath);
+    } catch {
+      /* test cleanup */
+    }
   });
 
-  it('inserts admin and member once', () => {
+  it('inserts users and three QA decks with enough cards to practice', () => {
     const db = openDb(dbPath);
     migrate(db);
     seed(db);
-    seed(db); // idempotent
-    const rows = db.prepare('SELECT email, role FROM users ORDER BY email').all();
-    expect(rows).toEqual([
-      { email: 'admin@lab.local', role: 'admin' },
-      { email: 'member@lab.local', role: 'member' },
+    seed(db);
+    const users = db.prepare('SELECT email FROM users ORDER BY email').all();
+    expect(users).toEqual([
+      { email: 'admin@lab.local' },
+      { email: 'member@lab.local' },
     ]);
+    const decks = db.prepare('SELECT name FROM decks ORDER BY name').all() as { name: string }[];
+    expect(decks.length).toBeGreaterThanOrEqual(3);
+    expect(decks.some((d) => /playwright/i.test(d.name))).toBe(true);
+    expect(decks.some((d) => /api/i.test(d.name))).toBe(true);
+    expect(decks.some((d) => /behavioral|star/i.test(d.name))).toBe(true);
+    const cards = db.prepare('SELECT COUNT(*) AS c FROM cards').get() as { c: number };
+    expect(cards.c).toBeGreaterThanOrEqual(12);
     db.close();
   });
 });
@@ -320,17 +551,18 @@ describe('seed', () => {
 yarn vitest run tests/unit/seed.test.ts
 ```
 
-- [ ] **Step 4: Implement `db.ts` + `seed.ts`**
+- [ ] **Step 4: Implement db + password + seed**
 
 ```ts
-// apps/api/src/db.ts
+// apps/api/src/data/db.ts
 import Database from 'better-sqlite3';
 import path from 'node:path';
-import { seed } from './seed.js';
 
 export type Db = Database.Database;
 
-export function openDb(dbPath = process.env.LAB_DB_PATH ?? path.join(process.cwd(), 'lab.db')): Db {
+export function openDb(
+  dbPath = process.env.LAB_DB_PATH ?? path.join(process.cwd(), 'lab.db'),
+): Db {
   const db = new Database(dbPath);
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
@@ -344,59 +576,193 @@ export function migrate(db: Db): void {
       email TEXT NOT NULL UNIQUE,
       password_hash TEXT NOT NULL,
       role TEXT NOT NULL CHECK(role IN ('admin','member')),
-      display_name TEXT NOT NULL
+      display_name TEXT NOT NULL,
+      total_xp INTEGER NOT NULL DEFAULT 0,
+      current_streak INTEGER NOT NULL DEFAULT 0,
+      last_practice_date TEXT
     );
-    CREATE TABLE IF NOT EXISTS projects (
+    CREATE TABLE IF NOT EXISTS decks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       description TEXT NOT NULL DEFAULT '',
-      owner_user_id INTEGER NOT NULL REFERENCES users(id),
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      owner_user_id INTEGER NOT NULL REFERENCES users(id)
     );
-    CREATE TABLE IF NOT EXISTS project_members (
-      project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    CREATE TABLE IF NOT EXISTS deck_members (
+      deck_id INTEGER NOT NULL REFERENCES decks(id) ON DELETE CASCADE,
       user_id INTEGER NOT NULL REFERENCES users(id),
       role TEXT NOT NULL CHECK(role IN ('admin','member')),
-      PRIMARY KEY (project_id, user_id)
+      PRIMARY KEY (deck_id, user_id)
+    );
+    CREATE TABLE IF NOT EXISTS cards (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      deck_id INTEGER NOT NULL REFERENCES decks(id) ON DELETE CASCADE,
+      prompt TEXT NOT NULL,
+      answer_hint TEXT NOT NULL DEFAULT '',
+      tags TEXT NOT NULL DEFAULT '[]'
+    );
+    CREATE TABLE IF NOT EXISTS card_progress (
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      card_id INTEGER NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
+      confidence TEXT NOT NULL CHECK(confidence IN ('learning','solid','mastered')),
+      practice_count INTEGER NOT NULL DEFAULT 0,
+      last_practiced_at TEXT,
+      PRIMARY KEY (user_id, card_id)
+    );
+    CREATE TABLE IF NOT EXISTS practice_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      card_id INTEGER NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
+      confidence TEXT NOT NULL,
+      xp_awarded INTEGER NOT NULL,
+      practiced_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
 }
+```
 
-export function resetAndSeed(dbPath?: string): Db {
-  const db = openDb(dbPath);
-  migrate(db);
-  seed(db);
-  return db;
+```ts
+// apps/api/src/http/password.ts
+import bcrypt from 'bcryptjs';
+
+export function hashPassword(plain: string): string {
+  return bcrypt.hashSync(plain, 8);
+}
+
+export function verifyPassword(plain: string, hash: string): boolean {
+  return bcrypt.compareSync(plain, hash);
 }
 ```
 
 ```ts
 // apps/api/src/seed.ts
-import bcrypt from 'bcryptjs';
-import type { Db } from './db.js';
+import { SEED_USERS } from '@lab/shared';
+import type { Db } from './data/db.js';
+import { hashPassword } from './http/password.js';
 
-export const SEED_USERS = [
-  { email: 'admin@lab.local', password: 'Admin123!', role: 'admin' as const, displayName: 'Lab Admin' },
-  { email: 'member@lab.local', password: 'Member123!', role: 'member' as const, displayName: 'Lab Member' },
-];
+const SEED_DECKS = [
+  {
+    name: 'Playwright & E2E',
+    description: 'UI automation interview prompts you will actually rehearse',
+    cards: [
+      {
+        prompt: 'How do you choose between role/label locators and CSS selectors in Playwright?',
+        answerHint: 'Prefer role/label for resilience; CSS when no accessible name exists.',
+        tags: ['playwright', 'locators'],
+      },
+      {
+        prompt: 'What makes an E2E test flaky, and how do you quarantine vs fix?',
+        answerHint: 'Races and shared state; tag @flaky, own a fix-within-a-week policy.',
+        tags: ['flake', 'process'],
+      },
+      {
+        prompt: 'How do you keep E2E coverage thin without losing confidence?',
+        answerHint: 'Critical journeys only; push rules to unit/API; use tags for smoke.',
+        tags: ['pyramid'],
+      },
+      {
+        prompt: 'Walk through debugging a failing Playwright test in CI with traces.',
+        answerHint: 'Reproduce locally, open trace, isolate selector vs timing vs data.',
+        tags: ['ci', 'debug'],
+      },
+    ],
+  },
+  {
+    name: 'API testing & authz',
+    description: 'HTTP and authorization prompts for SDET / quality platform interviews',
+    cards: [
+      {
+        prompt: 'How do you prove a 403 is enforced server-side, not only hidden in the UI?',
+        answerHint: 'Call the API as a non-admin; assert status and that the row still exists.',
+        tags: ['api', 'rbac'],
+      },
+      {
+        prompt: 'What belongs in API tests vs E2E for an invite-member flow?',
+        answerHint: 'API: contract/authz; E2E: critical UI path; cross-layer: UI then API assert.',
+        tags: ['pyramid'],
+      },
+      {
+        prompt: 'How do you design fixtures so API tests stay deterministic?',
+        answerHint: 'Isolated DB per run or reset helpers; seed known users; no shared mutable state.',
+        tags: ['fixtures'],
+      },
+      {
+        prompt: 'When would you add schema/contract checks on mutating endpoints?',
+        answerHint: 'After smoke is green; AJV/OpenAPI on writes catches drift before UI flakes.',
+        tags: ['contract'],
+      },
+    ],
+  },
+  {
+    name: 'Behavioral (STAR)',
+    description: 'Stories interviewers always ask — rehearse out loud',
+    cards: [
+      {
+        prompt: 'Tell me about a time you owned quality for a risky release.',
+        answerHint: 'Situation → risk → your gate (tests/CI) → outcome → what you learned.',
+        tags: ['star', 'ownership'],
+      },
+      {
+        prompt: 'Describe a conflict with engineering about shipping without enough tests.',
+        answerHint: 'STAR: align on risk, propose a thinner smoke gate, measure escape defects.',
+        tags: ['star', 'conflict'],
+      },
+      {
+        prompt: 'Tell me about a failure or escaped bug and what you changed afterward.',
+        answerHint: 'Own the miss; add a regression; change process (tag, review, env) not blame.',
+        tags: ['star', 'failure'],
+      },
+      {
+        prompt: 'How have you mentored others or improved the team’s test design?',
+        answerHint: 'Concrete enablement: fixtures, guidelines, pairing, measurable flake drop.',
+        tags: ['star', 'mentoring'],
+      },
+    ],
+  },
+] as const;
 
 export function seed(db: Db): void {
-  const insert = db.prepare(
+  const insertUser = db.prepare(
     `INSERT OR IGNORE INTO users (email, password_hash, role, display_name)
      VALUES (@email, @password_hash, @role, @display_name)`,
   );
   for (const u of SEED_USERS) {
-    insert.run({
+    insertUser.run({
       email: u.email,
-      password_hash: bcrypt.hashSync(u.password, 8),
+      password_hash: hashPassword(u.password),
       role: u.role,
       display_name: u.displayName,
     });
   }
+
+  const admin = db.prepare(`SELECT id FROM users WHERE email = ?`).get('admin@lab.local') as
+    | { id: number }
+    | undefined;
+  if (!admin) return;
+
+  const deckExists = db.prepare(`SELECT id FROM decks WHERE name = ?`);
+  const insertDeck = db.prepare(
+    `INSERT INTO decks (name, description, owner_user_id) VALUES (?, ?, ?)`,
+  );
+  const insertMember = db.prepare(
+    `INSERT OR IGNORE INTO deck_members (deck_id, user_id, role) VALUES (?, ?, 'admin')`,
+  );
+  const insertCard = db.prepare(
+    `INSERT INTO cards (deck_id, prompt, answer_hint, tags) VALUES (?, ?, ?, ?)`,
+  );
+
+  for (const deck of SEED_DECKS) {
+    if (deckExists.get(deck.name)) continue;
+    const info = insertDeck.run(deck.name, deck.description, admin.id);
+    const deckId = Number(info.lastInsertRowid);
+    insertMember.run(deckId, admin.id);
+    for (const card of deck.cards) {
+      insertCard.run(deckId, card.prompt, card.answerHint, JSON.stringify(card.tags));
+    }
+  }
 }
 ```
 
-Fix the unit test imports to match: `openDb`, `migrate` from `db.js`, `seed` from `seed.js`.
+**Smell check:** `db.ts` must not import `seed.ts`.
 
 - [ ] **Step 5: Run — expect PASS**
 
@@ -408,43 +774,40 @@ yarn vitest run tests/unit/seed.test.ts
 
 ---
 
-### Task 4: Auth + projects API (TDD via Vitest HTTP)
+### Task 4: Stores, services, HTTP API (TDD via Fastify inject)
 
 **Files:**
-- Create: `apps/api/src/auth.ts`, `apps/api/src/app.ts`, `apps/api/src/routes/auth.ts`, `apps/api/src/routes/projects.ts`, `apps/api/src/server.ts`
-- Modify: `apps/api/package.json` (deps: `fastify`, `@fastify/cors`, `jose`)
-- Test: `tests/unit/api-auth-projects.test.ts`
+- Create: `apps/api/src/data/user-store.ts`, `deck-store.ts`, `progress-store.ts`
+- Create: `apps/api/src/application/auth-service.ts`, `deck-service.ts`, `practice-service.ts`
+- Create: `apps/api/src/http/token.ts`, `auth-guard.ts`, `http-error.ts`, `routes/*.ts`
+- Create: `apps/api/src/app.ts`, `server.ts`
+- Modify: deps `fastify`, `@fastify/cors`, `jose`
+- Test: `tests/unit/api-quest-deck.test.ts`
 
 **Interfaces:**
 
 ```ts
 export function buildApp(opts?: { dbPath?: string }): Promise<import('fastify').FastifyInstance>;
-// Routes:
-// POST /api/auth/login { email, password } -> { token, user: { id, email, role, displayName } }
-// GET  /api/projects  Authorization: Bearer <token> -> Project[]
-// POST /api/projects { name, description? } -> Project
-// PATCH /api/projects/:id { name?, description? } -> Project
-// POST /api/projects/:id/invites { email, role: 'admin'|'member' } -> { projectId, userId, role }
-// DELETE /api/projects/:id -> 204 | 403
+// Routes per spec API table (health, login, me, decks CRUD, invites, members, cards, practice)
 ```
 
-- [ ] **Step 1: Install API deps**
+- [ ] **Step 1: Install**
 
 ```bash
 yarn workspace @lab/api add fastify @fastify/cors jose
 ```
 
-- [ ] **Step 2: Write failing API integration tests** (inject Fastify, no Playwright yet)
+- [ ] **Step 2: Write failing API tests**
 
 ```ts
-// tests/unit/api-auth-projects.test.ts
+// tests/unit/api-quest-deck.test.ts
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { buildApp } from '../../apps/api/src/app.js';
 
-describe('API auth + projects', () => {
+describe('Quest Deck API', () => {
   let dbPath: string;
   let app: Awaited<ReturnType<typeof buildApp>>;
 
@@ -455,7 +818,11 @@ describe('API auth + projects', () => {
 
   afterEach(async () => {
     await app.close();
-    try { fs.unlinkSync(dbPath); } catch { /* ignore */ }
+    try {
+      fs.unlinkSync(dbPath);
+    } catch {
+      /* test cleanup */
+    }
   });
 
   async function login(email: string, password: string) {
@@ -468,9 +835,27 @@ describe('API auth + projects', () => {
     return res.json() as { token: string };
   }
 
-  it('logs in admin', async () => {
+  it('GET /api/health', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/health' });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ ok: true });
+  });
+
+  it('logs in and returns me with level/title', async () => {
     const { token } = await login('admin@lab.local', 'Admin123!');
-    expect(token).toBeTruthy();
+    const me = await app.inject({
+      method: 'GET',
+      url: '/api/me',
+      headers: { authorization: `Bearer ${token}` },
+    });
+    expect(me.statusCode).toBe(200);
+    expect(me.json()).toMatchObject({
+      email: 'admin@lab.local',
+      totalXp: 0,
+      level: 1,
+      title: 'Apprentice',
+      currentStreak: 0,
+    });
   });
 
   it('rejects bad password', async () => {
@@ -482,57 +867,64 @@ describe('API auth + projects', () => {
     expect(res.statusCode).toBe(401);
   });
 
-  it('creates project as admin', async () => {
+  it('practices a card and awards XP', async () => {
     const { token } = await login('admin@lab.local', 'Admin123!');
-    const res = await app.inject({
-      method: 'POST',
-      url: '/api/projects',
+    const decks = await app.inject({
+      method: 'GET',
+      url: '/api/decks',
       headers: { authorization: `Bearer ${token}` },
-      payload: { name: 'Alpha', description: 'first' },
     });
-    expect(res.statusCode).toBe(201);
-    expect(res.json()).toMatchObject({ name: 'Alpha' });
+    const deckId = (decks.json() as { id: number }[])[0]!.id;
+    const cards = await app.inject({
+      method: 'GET',
+      url: `/api/decks/${deckId}/cards`,
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const cardId = (cards.json() as { id: number }[])[0]!.id;
+    const practice = await app.inject({
+      method: 'POST',
+      url: `/api/cards/${cardId}/practice`,
+      headers: { authorization: `Bearer ${token}` },
+      payload: { confidence: 'learning' },
+    });
+    expect(practice.statusCode).toBe(200);
+    expect(practice.json()).toMatchObject({
+      xpAwarded: 10,
+      totalXp: 10,
+      level: 1,
+      title: 'Apprentice',
+      currentStreak: 1,
+    });
   });
 
-  it('member cannot delete project (403)', async () => {
+  it('member cannot delete deck (403); admin can (204)', async () => {
     const admin = await login('admin@lab.local', 'Admin123!');
     const created = await app.inject({
       method: 'POST',
-      url: '/api/projects',
+      url: '/api/decks',
       headers: { authorization: `Bearer ${admin.token}` },
-      payload: { name: 'Beta' },
+      payload: { name: `Temp-${Date.now()}`, description: '' },
     });
-    const projectId = (created.json() as { id: number }).id;
+    const deckId = (created.json() as { id: number }).id;
     await app.inject({
       method: 'POST',
-      url: `/api/projects/${projectId}/invites`,
+      url: `/api/decks/${deckId}/invites`,
       headers: { authorization: `Bearer ${admin.token}` },
       payload: { email: 'member@lab.local', role: 'member' },
     });
     const member = await login('member@lab.local', 'Member123!');
-    const del = await app.inject({
+    const denied = await app.inject({
       method: 'DELETE',
-      url: `/api/projects/${projectId}`,
+      url: `/api/decks/${deckId}`,
       headers: { authorization: `Bearer ${member.token}` },
     });
-    expect(del.statusCode).toBe(403);
-  });
-
-  it('admin can delete project (204)', async () => {
-    const admin = await login('admin@lab.local', 'Admin123!');
-    const created = await app.inject({
-      method: 'POST',
-      url: '/api/projects',
-      headers: { authorization: `Bearer ${admin.token}` },
-      payload: { name: 'Gamma' },
-    });
-    const projectId = (created.json() as { id: number }).id;
-    const del = await app.inject({
+    expect(denied.statusCode).toBe(403);
+    const allowed = await app.inject({
       method: 'DELETE',
-      url: `/api/projects/${projectId}`,
+      url: `/api/decks/${deckId}`,
       headers: { authorization: `Bearer ${admin.token}` },
     });
-    expect(del.statusCode).toBe(204);
+    expect(allowed.statusCode).toBe(204);
   });
 });
 ```
@@ -540,93 +932,106 @@ describe('API auth + projects', () => {
 - [ ] **Step 3: Run — expect FAIL**
 
 ```bash
-yarn vitest run tests/unit/api-auth-projects.test.ts
+yarn vitest run tests/unit/api-quest-deck.test.ts
 ```
 
-- [ ] **Step 4: Implement auth + app**
+- [ ] **Step 4: Implement layered API**
 
-Minimal shapes (implement fully; keep files small):
+Required pieces (keep files focused; no XP math in routes):
 
 ```ts
-// apps/api/src/auth.ts
-import bcrypt from 'bcryptjs';
+// apps/api/src/http/http-error.ts
+export class HttpError extends Error {
+  constructor(
+    message: string,
+    readonly statusCode: number,
+  ) {
+    super(message);
+  }
+}
+```
+
+```ts
+// apps/api/src/http/token.ts
 import { SignJWT, jwtVerify } from 'jose';
-import type { Role } from './domain/rbac.js';
+import { isRole, type Role } from '@lab/shared';
 
-const secret = () => new TextEncoder().encode(process.env.LAB_JWT_SECRET ?? 'lab-dev-secret-change-me');
+export type AccessTokenClaims = { sub: string; role: Role; email: string };
 
-export async function signToken(payload: { sub: string; role: Role; email: string }): Promise<string> {
-  return new SignJWT({ role: payload.role, email: payload.email })
+const secret = () =>
+  new TextEncoder().encode(process.env.LAB_JWT_SECRET ?? 'lab-dev-secret-change-me');
+
+export async function signToken(claims: AccessTokenClaims): Promise<string> {
+  return new SignJWT({ role: claims.role, email: claims.email })
     .setProtectedHeader({ alg: 'HS256' })
-    .setSubject(payload.sub)
+    .setSubject(claims.sub)
     .setExpirationTime('8h')
     .sign(secret());
 }
 
-export async function verifyToken(token: string): Promise<{ sub: string; role: Role; email: string }> {
+export async function verifyToken(token: string): Promise<AccessTokenClaims> {
   const { payload } = await jwtVerify(token, secret());
-  return {
-    sub: String(payload.sub),
-    role: payload.role as Role,
-    email: String(payload.email),
-  };
-}
-
-export function verifyPassword(plain: string, hash: string): boolean {
-  return bcrypt.compareSync(plain, hash);
+  if (!payload.sub || !isRole(payload.role) || typeof payload.email !== 'string') {
+    throw new HttpError('Invalid token', 401);
+  }
+  return { sub: String(payload.sub), role: payload.role, email: payload.email };
 }
 ```
 
-`buildApp({ dbPath })` must: open DB, migrate, seed, register CORS, register routes, decorate `db`. Use `canDeleteProject` for DELETE. Invite looks up user by email, inserts `project_members`. List projects returns projects where user is owner or member.
+`PracticeService.practice(userId, cardId, confidence)` must:
+1. Load previous `CardProgress.confidence` or null
+2. `xp = xpForPractice(prev, next)`
+3. Upsert progress; insert `practice_events`
+4. Update user `total_xp`, `current_streak` via `nextStreak`, `last_practice_date`
+5. Return `{ xpAwarded, totalXp, level: levelFromXp(...), title: titleForLevel(...), currentStreak }`
 
-`server.ts`:
+`DeckService.delete`: `getMembership` → `canDeleteDeck` → else 403; missing → 404.
 
-```ts
-import { buildApp } from './app.js';
+`buildApp`: openDb → migrate → seed → construct stores/services → register CORS + routes.
 
-const port = Number(process.env.PORT ?? 3333);
-const app = await buildApp();
-await app.listen({ port, host: '0.0.0.0' });
-console.log(`API on http://localhost:${port}`);
-```
+`server.ts`: listen on `PORT` default 3333.
 
 - [ ] **Step 5: Run — expect PASS**
 
 ```bash
-yarn vitest run tests/unit/api-auth-projects.test.ts
+yarn vitest run tests/unit/api-quest-deck.test.ts
 ```
 
 - [ ] **Step 6: Commit only if user asks**
 
 ---
 
-### Task 5: testkit + Playwright API project (`@smoke` / `@rbac`)
+### Task 5: testkit + Playwright API (`@smoke` / `@rbac` / `@progression`)
 
 **Files:**
 - Create: `packages/testkit/src/index.ts`, `packages/testkit/tsconfig.json`
 - Create: `playwright.config.ts`
-- Create: `tests/api/auth.spec.ts`, `tests/api/rbac-delete.spec.ts`
-- Create: `scripts/start-api-for-tests.mjs` (or use Playwright `webServer`)
+- Create: `tests/api/auth.spec.ts`, `tests/api/rbac-delete.spec.ts`, `tests/api/practice-xp.spec.ts`
+- Create: minimal Vite stub in `apps/web` for webServer health
 
 **Interfaces:**
 
 ```ts
-// packages/testkit/src/index.ts
-export const SEED_USERS = [ /* same credentials as API seed */ ];
 export class ApiClient {
-  constructor(private baseURL: string, private token?: string) {}
-  withToken(token: string): ApiClient;
-  login(email: string, password: string): Promise<{ token: string }>;
-  createProject(name: string): Promise<{ id: number; name: string }>;
-  invite(projectId: number, email: string, role: 'admin' | 'member'): Promise<void>;
-  deleteProject(projectId: number): Promise<{ status: number }>;
-  getMemberships(projectId: number): Promise<{ email: string; role: string }[]>;
+  constructor(baseURL: string, token?: string)
+  withToken(token: string): ApiClient
+  login(email: string, password: string): Promise<{ token: string }>
+  me(): Promise<{ totalXp: number; level: number; title: string; currentStreak: number }>
+  listDecks(): Promise<import('@lab/shared').Deck[]>
+  createDeck(name: string, description?: string): Promise<import('@lab/shared').Deck>
+  invite(deckId: number, email: string, role: import('@lab/shared').Role): Promise<void>
+  deleteDeck(deckId: number): Promise<{ status: number }>
+  getMembers(deckId: number): Promise<import('@lab/shared').DeckMember[]>
+  listCards(deckId: number): Promise<import('@lab/shared').Card[]>
+  practice(cardId: number, confidence: import('@lab/shared').Confidence): Promise<{
+    xpAwarded: number; totalXp: number; level: number; title: string; currentStreak: number
+  }>
 }
 ```
 
-- [ ] **Step 1: Implement testkit `ApiClient` using `fetch`**
+- [ ] **Step 1: Implement `ApiClient` with `fetch`** (full methods above; re-export `SEED_USERS` from `@lab/shared`)
 
-- [ ] **Step 2: Write `playwright.config.ts`**
+- [ ] **Step 2: `playwright.config.ts`**
 
 ```ts
 import { defineConfig } from '@playwright/test';
@@ -663,9 +1068,7 @@ export default defineConfig({
 });
 ```
 
-Add `GET /api/health` → `{ ok: true }` in Task 4 app if missing.
-
-- [ ] **Step 3: Write API specs with tags**
+- [ ] **Step 3: API specs**
 
 ```ts
 // tests/api/auth.spec.ts
@@ -675,9 +1078,9 @@ import { ApiClient, SEED_USERS } from '@lab/testkit';
 const base = process.env.LAB_API_URL ?? 'http://127.0.0.1:3333';
 
 test('login happy @smoke @auth', async () => {
-  const client = new ApiClient(base);
-  const admin = SEED_USERS.find((u) => u.role === 'admin')!;
-  const { token } = await client.login(admin.email, admin.password);
+  const admin = SEED_USERS.find((u) => u.role === 'admin');
+  if (!admin) throw new Error('missing admin');
+  const { token } = await new ApiClient(base).login(admin.email, admin.password);
   expect(token).toBeTruthy();
 });
 
@@ -697,28 +1100,46 @@ import { ApiClient, SEED_USERS } from '@lab/testkit';
 const base = process.env.LAB_API_URL ?? 'http://127.0.0.1:3333';
 
 test('member delete forbidden; admin delete ok @smoke @rbac @mutation', async () => {
-  const adminUser = SEED_USERS.find((u) => u.role === 'admin')!;
-  const memberUser = SEED_USERS.find((u) => u.role === 'member')!;
-  const admin = await new ApiClient(base).login(adminUser.email, adminUser.password).then((r) =>
-    new ApiClient(base, r.token),
+  const adminUser = SEED_USERS.find((u) => u.role === 'admin');
+  const memberUser = SEED_USERS.find((u) => u.role === 'member');
+  if (!adminUser || !memberUser) throw new Error('missing seed');
+  const admin = new ApiClient(base).withToken(
+    (await new ApiClient(base).login(adminUser.email, adminUser.password)).token,
   );
-  const project = await admin.createProject(`rbac-${Date.now()}`);
-  await admin.invite(project.id, memberUser.email, 'member');
-  const member = await new ApiClient(base).login(memberUser.email, memberUser.password).then((r) =>
-    new ApiClient(base, r.token),
+  const deck = await admin.createDeck(`rbac-${Date.now()}`);
+  await admin.invite(deck.id, memberUser.email, 'member');
+  const member = new ApiClient(base).withToken(
+    (await new ApiClient(base).login(memberUser.email, memberUser.password)).token,
   );
-  expect((await member.deleteProject(project.id)).status).toBe(403);
-  expect((await admin.deleteProject(project.id)).status).toBe(204);
+  expect((await member.deleteDeck(deck.id)).status).toBe(403);
+  expect((await admin.deleteDeck(deck.id)).status).toBe(204);
 });
 ```
 
-Wire `@lab/testkit` exports in its `package.json` `"exports": { ".": "./src/index.ts" }` (or built `dist`) so Playwright/tsx can resolve.
+```ts
+// tests/api/practice-xp.spec.ts
+import { test, expect } from '@playwright/test';
+import { ApiClient, SEED_USERS } from '@lab/testkit';
 
-- [ ] **Step 4: Run smoke API only (web may 404 until Task 6 — temporarily comment webServer web entry OR stub web)**
+const base = process.env.LAB_API_URL ?? 'http://127.0.0.1:3333';
 
-Until web exists, set `webServer` to API-only, or add a one-line Vite stub page. Prefer stub in Task 5:
+test('practice awards XP @smoke @progression @mutation', async () => {
+  const adminUser = SEED_USERS.find((u) => u.role === 'admin');
+  if (!adminUser) throw new Error('missing admin');
+  const client = new ApiClient(base).withToken(
+    (await new ApiClient(base).login(adminUser.email, adminUser.password)).token,
+  );
+  const decks = await client.listDecks();
+  const cards = await client.listCards(decks[0]!.id);
+  const before = await client.me();
+  const result = await client.practice(cards[0]!.id, 'learning');
+  expect(result.xpAwarded).toBe(10);
+  expect(result.totalXp).toBe(before.totalXp + 10);
+  expect(result.currentStreak).toBeGreaterThanOrEqual(1);
+});
+```
 
-`apps/web` minimal Vite `index.html` + `npm create` equivalent so `webServer` health check passes.
+- [ ] **Step 4: Vite stub** so `http://127.0.0.1:5173` returns 200 (full UI in Task 6)
 
 - [ ] **Step 5: Run**
 
@@ -732,47 +1153,43 @@ Expected: PASS.
 
 ---
 
-### Task 6: React UI (login, list/create, invite, delete)
+### Task 6: React UI (Quest Deck)
 
 **Files:**
-- Create: `apps/web` Vite React TS app files: `src/main.tsx`, `src/App.tsx`, `src/api.ts`, `src/pages/LoginPage.tsx`, `src/pages/ProjectsPage.tsx`, `src/pages/ProjectDetailPage.tsx`
-- Modify: `apps/web/package.json` (react, react-dom, vite, `@vitejs/plugin-react`)
+- Create: `apps/web/src/main.tsx`, `App.tsx`, `lib/api.ts`, `pages/LoginPage.tsx`, `HomePage.tsx`, `DeckDetailPage.tsx`, `PracticePage.tsx`
+- Modify: `apps/web` deps (react, vite, `@lab/shared`)
 
 **Interfaces:**
-- Consumes: same REST API as Task 4
-- Produces: accessible UI — email/password fields, buttons named "Sign in", "Create project", "Invite", "Delete project"
+- Thin UI client only (sessionStorage token); types from `@lab/shared`; **no** `@lab/testkit`
+- Labels: Email, Password, Sign in; Home shows level/title/streak/XP; Delete deck; Invite; confidence buttons Learning / Solid / Mastered; **Show hint** reveals `answerHint`
+- Practice flow must feel usable for real prep (prompt → think → optional hint → rate), not a hollow demo shell
 
-- [ ] **Step 1: Scaffold Vite React**
+- [ ] **Step 1: Add web deps + Vite proxy `/api` → `http://127.0.0.1:3333`**
 
 ```bash
-cd /c/Users/great/Desktop/qa-platform-lab/apps/web
-# If empty stub exists, add deps:
-yarn workspace @lab/web add react react-dom
+yarn workspace @lab/web add react react-dom @lab/shared
 yarn workspace @lab/web add -D vite @vitejs/plugin-react typescript @types/react @types/react-dom
 ```
 
-`vite.config.ts` proxy `/api` → `http://127.0.0.1:3333`.
-
-- [ ] **Step 2: Implement `api.ts` client** storing token in `sessionStorage`
+- [ ] **Step 2: Implement `lib/api.ts`** — login, me, listDecks, createDeck, listCards, practice, invite, deleteDeck, getMembers (throw with status on failure)
 
 - [ ] **Step 3: Implement pages**
 
-Requirements:
-- Login form labels: "Email", "Password"; button role `Sign in`
-- Projects page: heading "Projects"; textbox "Project name"; button "Create project"; list links by project name
-- Detail: textbox "Invite email"; combobox/select "Role"; button "Invite"; button "Delete project" (visible to all; server enforces RBAC; show error text on 403)
+- Login → Home on success  
+- Home: progression header + deck links (`%` solid if API provides) + create deck  
+- Deck detail: card list, Practice link, admin Invite + Delete deck (403 message)  
+- Practice: show prompt; button **Show hint** reveals `answerHint`; confidence controls; show `xpAwarded` after submit  
 
-Keep CSS minimal (unopinionated layout).
+Minimal CSS.
 
-- [ ] **Step 4: Manual smoke**
+- [ ] **Step 4: Manual smoke (prep usefulness check)**
 
 ```bash
 yarn dev:api
-# other terminal
 yarn dev:web
 ```
 
-Log in as admin, create project, invite member, confirm member sees 403 on delete.
+As admin: open Behavioral (STAR), practice one card with hint, confirm XP/streak. Invite member; confirm delete 403 as member. Ask: “Would I use this tomorrow morning before interviews?” If no, fix UX before moving on.
 
 - [ ] **Step 5: Commit only if user asks**
 
@@ -781,10 +1198,15 @@ Log in as admin, create project, invite member, confirm member sees 403 on delet
 ### Task 7: E2E Playwright UI
 
 **Files:**
-- Create: `tests/e2e/login.spec.ts`, `tests/e2e/create-project.spec.ts`
-- Create: `tests/fixtures/lab.ts` (Playwright fixtures `asAdmin` / `asMember` UI helpers)
+- Create: `tests/fixtures/lab.ts`, `tests/e2e/login.spec.ts`, `tests/e2e/practice.spec.ts`
 
 **Interfaces:**
+
+```ts
+export const test = base.extend<{ asAdmin: void; asMember: void }>({ /* login helpers */ });
+```
+
+- [ ] **Step 1: Fixtures**
 
 ```ts
 // tests/fixtures/lab.ts
@@ -793,27 +1215,37 @@ import { SEED_USERS } from '@lab/testkit';
 
 export const test = base.extend<{ asAdmin: void; asMember: void }>({
   asAdmin: async ({ page }, use) => {
-    const admin = SEED_USERS.find((u) => u.role === 'admin')!;
+    const admin = SEED_USERS.find((u) => u.role === 'admin');
+    if (!admin) throw new Error('missing admin');
     await page.goto('/login');
     await page.getByLabel('Email').fill(admin.email);
     await page.getByLabel('Password').fill(admin.password);
     await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByRole('heading', { name: 'Projects' })).toBeVisible();
+    await expect(page.getByText(/Apprentice|Adventurer|Challenger|Veteran|Staff Contender/)).toBeVisible();
     await use();
   },
-  // asMember analogous
+  asMember: async ({ page }, use) => {
+    const member = SEED_USERS.find((u) => u.role === 'member');
+    if (!member) throw new Error('missing member');
+    await page.goto('/login');
+    await page.getByLabel('Email').fill(member.email);
+    await page.getByLabel('Password').fill(member.password);
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page.getByText(/Apprentice|Adventurer|Challenger|Veteran|Staff Contender/)).toBeVisible();
+    await use();
+  },
 });
 export { expect };
 ```
 
-- [ ] **Step 1: Write failing E2E specs**
+- [ ] **Step 2: Specs**
 
 ```ts
 // tests/e2e/login.spec.ts
-import { test, expect } from '../fixtures/lab';
+import { test, expect } from '../fixtures/lab.js';
 
 test('admin login @smoke @auth', async ({ page, asAdmin }) => {
-  await expect(page.getByRole('heading', { name: 'Projects' })).toBeVisible();
+  await expect(page.getByText(/Apprentice|Adventurer|Challenger|Veteran|Staff Contender/)).toBeVisible();
 });
 
 test('bad password shows error @auth', async ({ page }) => {
@@ -826,76 +1258,21 @@ test('bad password shows error @auth', async ({ page }) => {
 ```
 
 ```ts
-// tests/e2e/create-project.spec.ts
-import { test, expect } from '../fixtures/lab';
+// tests/e2e/practice.spec.ts
+import { test, expect } from '../fixtures/lab.js';
 
-test('create project via UI @smoke @mutation', async ({ page, asAdmin }) => {
-  const name = `UI-${Date.now()}`;
-  await page.getByLabel('Project name').fill(name);
-  await page.getByRole('button', { name: 'Create project' }).click();
-  await expect(page.getByRole('link', { name })).toBeVisible();
+test('practice awards XP in UI @smoke @progression @mutation', async ({ page, asAdmin }) => {
+  await page.getByRole('link', { name: /Playwright/i }).click();
+  await page.getByRole('link', { name: /Practice/i }).first().click();
+  await page.getByRole('button', { name: 'Learning' }).click();
+  await expect(page.getByText(/xp|\+10/i)).toBeVisible();
 });
 ```
-
-- [ ] **Step 2: Run**
-
-```bash
-yarn playwright test --project=e2e --grep @smoke
-```
-
-Expected: PASS (fix UI labels if needed).
-
-- [ ] **Step 3: Commit only if user asks**
-
----
-
-### Task 8: Cross-layer invite test
-
-**Files:**
-- Create: `tests/cross-layer/invite.spec.ts`
-- Modify: API if needed — `GET /api/projects/:id/members` returning `{ email, role }[]`
-
-**Interfaces:**
-- Consumes: UI invite + `ApiClient.getMemberships(projectId)`
-- Produces: one tagged test `@smoke` proving UI → API membership
-
-- [ ] **Step 1: Ensure members endpoint exists** (add Vitest inject test if new)
-
-- [ ] **Step 2: Write cross-layer spec**
-
-```ts
-import { test, expect } from '../fixtures/lab';
-import { ApiClient, SEED_USERS } from '@lab/testkit';
-
-const apiBase = process.env.LAB_API_URL ?? 'http://127.0.0.1:3333';
-
-test('invite member in UI appears in API @smoke @mutation', async ({ page, asAdmin }) => {
-  const name = `XL-${Date.now()}`;
-  await page.getByLabel('Project name').fill(name);
-  await page.getByRole('button', { name: 'Create project' }).click();
-  await page.getByRole('link', { name }).click();
-  await page.getByLabel('Invite email').fill('member@lab.local');
-  await page.getByLabel('Role').selectOption('member');
-  await page.getByRole('button', { name: 'Invite' }).click();
-  await expect(page.getByText('member@lab.local')).toBeVisible();
-
-  const admin = SEED_USERS.find((u) => u.role === 'admin')!;
-  const token = (await new ApiClient(apiBase).login(admin.email, admin.password)).token;
-  const client = new ApiClient(apiBase, token);
-  // Resolve project id: list projects and find by name
-  const projects = await client.listProjects();
-  const project = projects.find((p) => p.name === name)!;
-  const members = await client.getMemberships(project.id);
-  expect(members.some((m) => m.email === 'member@lab.local' && m.role === 'member')).toBe(true);
-});
-```
-
-Add `listProjects()` to `ApiClient` if missing.
 
 - [ ] **Step 3: Run**
 
 ```bash
-yarn playwright test --project=cross-layer --grep @smoke
+yarn playwright test --project=e2e --grep @smoke
 ```
 
 Expected: PASS.
@@ -904,14 +1281,62 @@ Expected: PASS.
 
 ---
 
-### Task 9: CI + portfolio docs + lint/typecheck scripts
+### Task 8: Cross-layer invite
 
 **Files:**
-- Create: `.github/workflows/ci.yml`
-- Create: `docs/quality-architecture.md`, `docs/demo.md`
-- Modify: `README.md`, root `package.json` scripts, add eslint if lightweight
+- Create: `tests/cross-layer/invite.spec.ts`
 
-- [ ] **Step 1: Write CI workflow**
+- [ ] **Step 1: Spec**
+
+```ts
+import { test, expect } from '../fixtures/lab.js';
+import { ApiClient, SEED_USERS } from '@lab/testkit';
+
+const apiBase = process.env.LAB_API_URL ?? 'http://127.0.0.1:3333';
+
+test('invite member in UI appears in API @smoke @mutation', async ({ page, asAdmin }) => {
+  const name = `XL-${Date.now()}`;
+  await page.getByLabel('Deck name').fill(name);
+  await page.getByRole('button', { name: 'Create deck' }).click();
+  await page.getByRole('link', { name }).click();
+  await page.getByLabel('Invite email').fill('member@lab.local');
+  await page.getByLabel('Role').selectOption('member');
+  await page.getByRole('button', { name: 'Invite' }).click();
+  await expect(page.getByText('member@lab.local')).toBeVisible();
+
+  const admin = SEED_USERS.find((u) => u.role === 'admin');
+  if (!admin) throw new Error('missing admin');
+  const token = (await new ApiClient(apiBase).login(admin.email, admin.password)).token;
+  const client = new ApiClient(apiBase, token);
+  const decks = await client.listDecks();
+  const deck = decks.find((d) => d.name === name);
+  expect(deck).toBeTruthy();
+  const members = await client.getMembers(deck!.id);
+  expect(members.some((m) => m.email === 'member@lab.local' && m.role === 'member')).toBe(true);
+});
+```
+
+Home must expose create-deck controls with labels **Deck name** and button **Create deck** (add in Task 6 if missing).
+
+- [ ] **Step 2: Run**
+
+```bash
+yarn playwright test --project=cross-layer --grep @smoke
+```
+
+Expected: PASS.
+
+- [ ] **Step 3: Commit only if user asks**
+
+---
+
+### Task 9: CI + portfolio docs
+
+**Files:**
+- Create: `.github/workflows/ci.yml`, `docs/quality-architecture.md`, `docs/demo.md`
+- Modify: `README.md`, lint script if lightweight
+
+- [ ] **Step 1: CI**
 
 ```yaml
 name: ci
@@ -928,6 +1353,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '22', cache: yarn }
       - run: yarn install --frozen-lockfile
+      - run: yarn workspace @lab/shared build
       - run: yarn typecheck
       - run: yarn test:unit
       - run: npx playwright install --with-deps chromium
@@ -945,8 +1371,9 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '22', cache: yarn }
       - run: yarn install --frozen-lockfile
+      - run: yarn workspace @lab/shared build
       - run: yarn typecheck
-      - run: yarn test:all
+      - run: yarn test:unit
       - run: npx playwright install --with-deps chromium
       - run: yarn playwright test
       - uses: actions/upload-artifact@v4
@@ -956,52 +1383,22 @@ jobs:
           path: playwright-report/
 ```
 
-Fix `test:all` so it does not double-run Playwright before browsers install — prefer:
+- [ ] **Step 2: `docs/quality-architecture.md`** — pyramid, tags (`@smoke` `@auth` `@rbac` `@mutation` `@progression`), flake policy, non-goals, PR vs main, layered API note, progression rules owned by domain module
 
-```json
-"test:unit": "vitest run",
-"test:smoke": "playwright test --grep @smoke",
-"test:all": "vitest run && playwright test"
-```
+- [ ] **Step 3: `docs/demo.md`** — 60s: CI badge → `xpForPractice` unit test → `@rbac` 403 → practice XP → cross-layer invite → UI practice on STAR deck → close with “I use this to prep”
 
-And in `main-full`, run `yarn test:unit` then install browsers then `yarn playwright test` (remove duplicate from `test:all` in CI).
-
-- [ ] **Step 2: Write `docs/quality-architecture.md`**
-
-Must include: pyramid diagram (text), tags (`@smoke` `@auth` `@rbac` `@mutation`), flake policy (“quarantine with `@flaky`, fix within one week”), explicit non-goals list from the design spec, how PR vs `main` gates differ.
-
-- [ ] **Step 3: Write `docs/demo.md`**
-
-60-second script:
-
-1. Open README CI badge
-2. Show `canDeleteProject` unit test
-3. Run or open report for `@rbac` member 403
-4. Show cross-layer invite spec
-5. Walk UI login as admin once
-
-- [ ] **Step 4: Finalize README**
-
-Include:
-- One-sentence problem statement from design
-- Stack badges (text OK)
-- CI badge markdown (repo slug placeholder `YOUR_USER/qa-platform-lab`)
-- Node 22+
-- Commands:
+- [ ] **Step 4: README** — Lead with dual purpose: (1) Quest Deck prep tool you can run locally, (2) owned quality system for hiring managers. Include resume bullet from spec; Node 22+; CI badge `greatmindsinside/qa-platform-lab`; how to start a prep session (`yarn dev`) and how to run `@smoke`.
 
 ```bash
 yarn install
+yarn workspace @lab/shared build
 yarn test:unit
 yarn test:smoke
 ```
 
-- Expected smoke time note (~under 2 minutes locally)
-- Resume-safe bullet for copy/paste from design spec
-
-- [ ] **Step 5: Local verification gate**
+- [ ] **Step 5: Local gate**
 
 ```bash
-cd /c/Users/great/Desktop/qa-platform-lab
 yarn typecheck
 yarn test:unit
 npx playwright install chromium
@@ -1011,21 +1408,13 @@ yarn playwright test
 
 Expected: all green.
 
-- [ ] **Step 6: Publish checklist (human)**
-
-1. Create public GitHub repo `qa-platform-lab`
-2. Push `main`
-3. Confirm Actions green
-4. Pin repo; add LinkedIn Featured link
-5. Optional: add one-line pointer from copilot career notes to the URL
-
-- [ ] **Step 7: Commit only if user asks**
+- [ ] **Step 6: Commit only if user asks**
 
 ---
 
-## Out of scope for this plan (Phase 2+)
+## Out of scope (Phase 2+)
 
-AJV/OpenAPI schemas, axe, flake quarantine automation, demo GIF, QA ops page, k6, Pact, Postgres — tracked in design spec Phases 2–3 only.
+Streak freeze, spaced repetition, boss runs, AJV/OpenAPI, axe, k6, Pact, Postgres, QA ops page — per spec only.
 
 ---
 
@@ -1033,16 +1422,18 @@ AJV/OpenAPI schemas, axe, flake quarantine automation, demo GIF, QA ops page, k6
 
 | Spec requirement | Task |
 | ---------------- | ---- |
-| Greenfield B2B projects SaaS | 3–6 |
-| Roles admin/member; admin-only delete | 2, 4, 5 |
-| Invite member | 4, 6, 8 |
-| Unit Vitest | 2, 3, 4 |
-| API + E2E + cross-layer | 5, 7, 8 |
+| Dual north star (job + real prep) | Global + Tasks 3, 6, 9 |
+| Quest Deck product + RPG formulas | 2, 4, 6 |
+| Three seeded QA decks (≥4 cards, STAR required) | 3 |
+| Practice Show hint / answerHint | 6, 7 |
+| API table (health→practice) | 4 |
+| UI screens + labels | 6, 7, 8 |
+| Unit progression + RBAC | 2 |
+| API / E2E / cross-layer + tags | 5, 7, 8 |
 | Fixtures asAdmin/asMember | 7 |
-| Tags @smoke @auth @rbac @mutation | 5, 7, 8 |
-| CI PR smoke / main full + report artifact | 9 |
-| quality-architecture + README + demo | 9 |
-| Implement in this public repo | 1 + publish checklist |
-| Phase 2/3 deferred | Out of scope section |
+| CI PR smoke / main full | 9 |
+| quality-architecture + demo + README | 9 |
+| SOLID layers + `@lab/shared` | 1–4 |
+| Spec-driven / no MVP non-goals | Global + Out of scope |
 
-**Placeholder scan:** none intentional. **Type consistency:** `Role = 'admin' \| 'member'`; seed emails/passwords consistent across seed, testkit, docs.
+**Placeholder scan:** none. **Type consistency:** decks/cards/practice; membership delete via `canDeleteDeck`; XP formulas match spec. **Dual-goal check:** seed content is rehearsable interview material; quality layers still prove RBAC + progression + cross-layer.

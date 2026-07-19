@@ -8,14 +8,17 @@
 
 ## Goal
 
-Ship a cloneable portfolio proof a hiring manager can run in ~5 minutes, demonstrating **cohesive Quality Engineering system ownership** (product under test + layered tests + CI gates + risk-based coverage + cross-layer validation).
+**North star (both required — neither is secondary):**
 
-The product under test is also a **real interview-prep tool** the author uses: decks of interview questions, practice sessions, and light RPG progression (XP, levels, titles, streaks).
+1. **Get the job** — a cloneable portfolio proof a hiring manager can run in ~5 minutes, demonstrating cohesive Quality Engineering system ownership (owned AUT + layered tests + CI gates + risk-based coverage + cross-layer validation).
+2. **Prep for interviews** — a tool the author actually opens for practice: real QA/SDET question decks, confidence ratings, and light RPG progression that makes daily prep sticky.
+
+If a feature helps the résumé but you would not use it to prep, cut it. If it helps prep but weakens the quality narrative (e.g. no authz risk), redesign it so both still win.
 
 **Job-search outcomes:**
 
 - Resume / LinkedIn: one system narrative for Senior/Staff QA Automation and Quality Platform roles
-- Interview: 60-second walkthrough (RBAC + practice→XP domain rules + UI/API cross-layer + CI artifact)
+- Interview: 60-second walkthrough (RBAC + practice→XP domain rules + UI/API cross-layer + CI artifact) ending with “I use this to prep”
 - Ongoing side project: MVP in ~1 week, then phased depth
 
 ## Decisions locked
@@ -56,7 +59,7 @@ Grounded in Self-Determination Theory and patterns from successful learning apps
 - XP measures effort; confidence rating measures mastery — do not conflate them.
 - Progress is visible on Home (level, title, XP to next level, streak).
 - Respect the user: no dark-pattern punishment beyond a simple streak reset; no paywalls or loot boxes.
-- Keep the loop tiny so the portfolio’s quality system stays the star.
+- Keep the product loop tiny so daily prep stays frictionless **and** the quality system remains easy to explain in an interview.
 
 ## Product (AUT)
 
@@ -91,11 +94,13 @@ Choose deck → Draw card → Answer (notes optional) → Rate confidence
 
 ### Seed content (day-1 usefulness)
 
-At least two decks with real QA/SDET prompts, for example:
+MVP **must** ship three decks with real prompts the author would practice (minimum **4 cards each**):
 
-- Playwright & E2E
-- API testing & authz
-- Behavioral (STAR) — optional third if time
+1. **Playwright & E2E** — locators, flake, critical-path design
+2. **API testing & authz** — 403 proofs, pyramid placement, contract vs E2E
+3. **Behavioral (STAR)** — ownership, conflict, failure, mentoring (always asked in interviews)
+
+Cards include `answerHint` so Practice can reveal a study cue after (or beside) the prompt — not an AI answer, just enough to make solo prep useful.
 
 ### Non-goals (product)
 
@@ -143,9 +148,9 @@ deckMasteryPercent(confidences: Confidence[]): number  // solid|mastered count /
 1. **Sign in** — Email, Password, button “Sign in”
 2. **Home** — heading with progression; deck links
 3. **Deck detail** — cards; “Practice”; admin: invite, add card, “Delete deck”
-4. **Practice** — prompt; rate confidence; show XP result
+4. **Practice** — prompt; optional reveal of `answerHint`; rate confidence; show XP result
 
-Accessible labels for E2E: Email, Password, Sign in, deck name fields, confidence controls, Delete deck, Invite.
+Accessible labels for E2E: Email, Password, Sign in, deck name fields, confidence controls, Delete deck, Invite, Show hint.
 
 ## Engineering standards
 
@@ -174,7 +179,7 @@ Accessible labels for E2E: Email, Password, Sign in, deck name fields, confidenc
 
 ### Week-1 MVP (must ship)
 
-1. Seeded admin + member; seeded QA decks/cards
+1. Seeded admin + member; **three** seeded QA decks (≥4 cards each, including Behavioral STAR)
 2. Fixtures: `asAdmin`, `asMember`
 3. Tags: `@smoke` `@auth` `@rbac` `@mutation` `@progression`
 4. Specs: login happy/bad; create deck; practice awards XP; member delete → 403 / admin → 204; cross-layer invite
@@ -229,13 +234,19 @@ PR smoke target: under ~2 minutes.
 
 ## Success criteria
 
-- [ ] Author can run a real prep session on seeded QA decks
-- [ ] Practice updates XP, level/title, and streak on Home
+**Useful prep tool**
+
+- [ ] Author can run a real prep session on all three seeded decks (incl. STAR)
+- [ ] Practice shows prompt + optional answer hint; confidence + XP/streak update on Home
+- [ ] Author would choose this over a bare notes doc for a week of interview prep
+
+**Job portfolio**
+
 - [ ] Stranger can clone and run `@smoke` in ≤5 minutes (documented Node version)
 - [ ] CI badge green on `main`
 - [ ] At least one RBAC and one cross-layer test visible in report
 - [ ] `docs/quality-architecture.md` explains the system in one sitting
-- [ ] Resume/LinkedIn uses the system bullet above
+- [ ] Resume/LinkedIn uses the system bullet above; demo script includes “I use this to prep”
 
 ## Implementation boundary
 
