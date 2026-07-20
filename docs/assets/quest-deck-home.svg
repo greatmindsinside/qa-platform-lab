@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-label="Quest Deck Home mock: Beginner Start here, Intermediate, Expert stage groups">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
@@ -11,7 +12,7 @@
   </defs>
   <rect width="960" height="540" fill="url(#bg)"/>
   <text x="48" y="56" fill="#2ee6a6" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="28" font-weight="700">Quest Deck</text>
-  <text x="48" y="88" fill="#9fb3c8" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="14">Streak 1 · Apprentice · XP</text>
+  <text x="48" y="88" fill="#9fb3c8" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="14">Streak 1 | Apprentice | XP</text>
   <rect x="700" y="40" width="212" height="14" rx="7" fill="#143246"/>
   <rect x="700" y="40" width="96" height="14" rx="7" fill="url(#accent)"/>
   <text x="48" y="140" fill="#e8f1f8" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="20" font-weight="600">Beginner</text>
@@ -19,7 +20,7 @@
   <text x="72" y="198" fill="#e8f1f8" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="600">QA Foundations</text>
   <rect x="72" y="210" width="88" height="22" rx="4" fill="#2ee6a6"/>
   <text x="84" y="225" fill="#071018" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12" font-weight="700">Start here</text>
-  <text x="780" y="210" fill="#3ecbff" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="14">Practice ’</text>
+  <text x="760" y="210" fill="#3ecbff" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="14">Practice -&gt;</text>
   <text x="48" y="290" fill="#e8f1f8" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="20" font-weight="600">Intermediate</text>
   <rect x="48" y="306" width="864" height="72" rx="10" fill="#102433" stroke="#1e3a4d"/>
   <text x="72" y="348" fill="#c5d5e4" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="16">Applied Testing Practice</text>
