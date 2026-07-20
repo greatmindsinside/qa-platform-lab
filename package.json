@@ -1,0 +1,35 @@
+{
+  "name": "qa-platform-lab",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc -b",
+    "test:unit": "vitest run --config vitest.config.ts",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:all": "playwright test",
+    "dev": "concurrently -k -n api,web -c cyan,magenta \"yarn dev:api\" \"yarn dev:web\"",
+    "dev:api": "yarn workspace @lab/api dev",
+    "dev:web": "yarn workspace @lab/web dev",
+    "build": "yarn workspace @lab/shared build && yarn workspace @lab/api build && yarn workspace @lab/web build"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.22.0",
+    "@playwright/test": "^1.51.0",
+    "@types/node": "^22.13.10",
+    "concurrently": "^9.1.2",
+    "eslint": "^9.22.0",
+    "globals": "^16.0.0",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.26.1",
+    "vitest": "^3.0.8"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "yarn@1.22.22"
+}

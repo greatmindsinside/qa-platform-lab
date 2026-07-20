@@ -1,0 +1,110 @@
+/**
+ * @fileoverview Seed curriculum invariants (003-learning-path).
+ */
+
+import { describe, expect, it } from 'vitest';
+import {
+  CURRICULUM_DECKS,
+  LEGACY_SEED_DECK_NAMES,
+  SEED_USERS,
+  type LearningStage,
+} from '@lab/shared';
+import { openMemoryDb } from '../../apps/api/src/data/db.ts';
+import { DeckStore } from '../../apps/api/src/data/deck-store.ts';
+import { UserStore } from '../../apps/api/src/data/user-store.ts';
+import { seedDatabase } from '../../apps/api/src/seed.ts';
+
+const STAGES: LearningStage[] = ['beginner', 'intermediate', 'expert'];
+
+describe('seed curriculum', () => {
+  it('seeds staged path with floors, mixed kinds, and no legacy names', async () => {
+    const db = openMemoryDb();
+    await seedDatabase(db);
+    const users = new UserStore(db);
+    const decks = new DeckStore(db);
+
+    const admin = users.findByEmail(SEED_USERS.admin.email)!;
+    const member = users.findByEmail(SEED_USERS.member.email)!;
+    const adminDecks = decks.listDecksForUser(admin.id);
+    const memberDecks = decks.listDecksForUser(member.id);
+
+    expect(adminDecks).toHaveLength(3);
+    expect(memberDecks).toHaveLength(3);
+
+    const names = adminDecks.map((d) => d.name);
+    expect(names).toEqual(
+      expect.arrayContaining([
+        CURRICULUM_DECKS.foundations,
+        CURRICULUM_DECKS.applied,
+        CURRICULUM_DECKS.strategy,
+      ]),
+    );
+    for (const legacy of LEGACY_SEED_DECK_NAMES) {
+      expect(names).not.toContain(legacy);
+    }
+
+    const recommended = adminDecks.filter((d) => d.recommended_start);
+    expect(recommended).toHaveLength(1);
+    expect(recommended[0]!.stage).toBe('beginner');
+    expect(recommended[0]!.name).toBe(CURRICULUM_DECKS.foundations);
+
+    for (const stage of STAGES) {
+      const stageDecks = adminDecks.filter((d) => d.stage === stage);
+      expect(stageDecks.length).toBeGreaterThanOrEqual(1);
+      expect(stageDecks.length).toBeLessThanOrEqual(3);
+
+      const cards = stageDecks.flatMap((d) => decks.listCards(d.id));
+      expect(cards.length).toBeGreaterThanOrEqual(8);
+      expect(Math.max(...stageDecks.map((d) => decks.listCards(d.id).length))).toBeGreaterThanOrEqual(
+        6,
+      );
+      expect(cards.some((c) => c.kind === 'open')).toBe(true);
+      expect(cards.some((c) => c.kind === 'mcq')).toBe(true);
+    }
+
+    for (const deck of adminDecks) {
+      expect(decks.getMembership(deck.id, admin.id)).toBe('admin');
+      expect(decks.getMembership(deck.id, member.id)).toBe('member');
+      const cards = decks.listCards(deck.id);
+      expect(cards.some((c) => c.kind === 'open')).toBe(true);
+      expect(cards.some((c) => c.kind === 'mcq')).toBe(true);
+    }
+  });
+
+  it('is idempotent when curriculum already exists', async () => {
+    const db = openMemoryDb();
+    await seedDatabase(db);
+    await seedDatabase(db);
+    const decks = new DeckStore(db);
+    const admin = new UserStore(db).findByEmail(SEED_USERS.admin.email)!;
+    expect(decks.listDecksForUser(admin.id)).toHaveLength(3);
+  });
+
+  it('removes legacy demo decks on upgrade when curriculum already exists', async () => {
+    const db = openMemoryDb();
+    await seedDatabase(db);
+    const users = new UserStore(db);
+    const decks = new DeckStore(db);
+    const admin = users.findByEmail(SEED_USERS.admin.email)!;
+    const member = users.findByEmail(SEED_USERS.member.email)!;
+
+    for (const name of LEGACY_SEED_DECK_NAMES) {
+      const legacy = decks.createDeck({
+        name,
+        description: 'legacy leftover',
+        ownerUserId: admin.id,
+      });
+      decks.upsertMember(legacy.id, admin.id, 'admin');
+      decks.upsertMember(legacy.id, member.id, 'member');
+    }
+    expect(decks.listDecksForUser(admin.id).length).toBeGreaterThan(3);
+
+    await seedDatabase(db);
+
+    const names = decks.listDecksForUser(admin.id).map((d) => d.name);
+    expect(names).toHaveLength(3);
+    for (const legacy of LEGACY_SEED_DECK_NAMES) {
+      expect(names).not.toContain(legacy);
+    }
+  });
+});

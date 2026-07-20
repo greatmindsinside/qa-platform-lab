@@ -8,7 +8,7 @@
 | id | number | PK |
 | email | string | unique |
 | passwordHash | string | bcrypt |
-| role | `admin` \| `member` | seed/demo only; **not** used for deck delete |
+| role | `admin` \| `member` | seed/demo only; **never** used alone for deck delete |
 | displayName | string | |
 | totalXp | number | default 0 |
 | currentStreak | number | default 0 |
@@ -27,7 +27,7 @@
 | ----- | ---- | ----- |
 | deckId | number | PK part |
 | userId | number | PK part |
-| role | `admin` \| `member` | authz for delete/invite |
+| role | `admin` \| `member` | **authz source of truth** for delete/invite |
 
 ### Card
 | Field | Type | Notes |
@@ -58,17 +58,20 @@
 ## Domain formulas (pure functions)
 
 ```ts
-canDeleteDeck(membershipRole): boolean  // admin only
+canDeleteDeck(membershipRole): boolean  // admin only — membership role, not users.role
 confidenceRank: learning=0, solid=1, mastered=2
 xpForPractice(prev, next): 10 + (improved ? 5 : 0)
 levelFromXp(totalXp): floor(totalXp/100)+1
 titleForLevel(level): Apprentice|Adventurer|Challenger|Veteran|Staff Contender
 nextStreak({ lastPracticeDate, todayUtc, currentStreak })
 deckMasteryPercent(confidences): % solid|mastered; empty → 0
+xpIntoLevel(totalXp): totalXp % 100
+xpToNextLevel(totalXp): xpIntoLevel === 0 ? 100 : 100 - xpIntoLevel
 ```
 
 ## Seed
 
 - Users: admin + member (credentials in `@lab/shared` `SEED_USERS`)
 - Decks (≥4 cards each): Playwright & E2E; API testing & authz; Behavioral (STAR)
-- Creator of seed decks: admin as deck admin member
+- Memberships: admin = deck `admin` on all seed decks; **member = deck `member` on all seed decks**
+- Card update/delete: not in MVP schema operations

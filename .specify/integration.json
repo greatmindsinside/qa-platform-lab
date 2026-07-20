@@ -6,7 +6,7 @@
   ],
   "integration_settings": {
     "cursor-agent": {
-      "script": "ps",
+      "script": "sh",
       "invoke_separator": "-"
     }
   },

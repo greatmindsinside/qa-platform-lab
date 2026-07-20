@@ -46,10 +46,11 @@ Ship the smallest Quest Deck that is useful for prep and proves the quality syst
 ## Product Constraints
 
 - **AUT:** Quest Deck — decks, cards, practice, RPG-lite XP/level/title/streak.
-- **Authz:** Deck membership `admin` | `member`; only deck admins delete decks.
-- **Seed:** Three decks (≥4 cards each): Playwright & E2E, API testing & authz, Behavioral (STAR); practice supports Show hint (`answerHint`).
-- **Stack:** Node ≥ 22, Yarn 1, TypeScript, Fastify, SQLite, React/Vite, Vitest, Playwright, GitHub Actions.
+- **Authz:** Deck membership `admin` | `member`; delete uses **membership** role only — never global `users.role` alone.
+- **Seed:** Three decks (≥4 cards each): Playwright & E2E, API testing & authz, Behavioral (STAR); admin = deck admin; **member seeded on all three as member**; practice supports Show hint (`answerHint`).
+- **Stack:** Node ≥ 22, Yarn 1, TypeScript, Fastify, SQLite, React/Vite, Vitest, Playwright, ESLint, GitHub Actions.
 - **Progression formulas:** locked in the feature spec — do not invent alternate XP/level/streak rules.
+- **Out of MVP (also):** card edit/delete; practice answer notes (Show hint is enough).
 
 ## Development Workflow
 
@@ -67,4 +68,4 @@ Ship the smallest Quest Deck that is useful for prep and proves the quality syst
 - Amendments require updating this file, bumping **Version**, and aligning active feature specs.
 - PRs and agent reviews must verify: dual north star, spec alignment, SOLID/TDD, and MVP non-goals.
 
-**Version**: 1.0.0 | **Ratified**: 2026-07-19 | **Last Amended**: 2026-07-19
+**Version**: 1.1.0 | **Ratified**: 2026-07-19 | **Last Amended**: 2026-07-19

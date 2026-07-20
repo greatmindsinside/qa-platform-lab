@@ -26,5 +26,11 @@
 
 ## Decision: Authz model
 
-**Choice**: Project/deck membership role for delete, not global `users.role`  
-**Rationale**: Realistic SaaS authz; invite mentor story; cleaner RBAC tests.
+**Choice**: Deck membership role for delete/invite, not global `users.role`  
+**Rationale**: Realistic SaaS authz; invite mentor story; cleaner RBAC tests. Seed member on all decks so prep works day one while delete still 403 for members.  
+**Test obligation**: Prove a global-`member` user with deck-`admin` membership can delete (membership wins).
+
+## Decision: XP bar + mastery on list
+
+**Choice**: `xpIntoLevel` / `xpToNextLevel` on `/api/me`; `masteryPercent` on each deck in `GET /api/decks`  
+**Rationale**: Dual north star UX — progress must be visible without client-side formula drift.

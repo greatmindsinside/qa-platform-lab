@@ -66,7 +66,7 @@ Quest Deck week-1 is already specified. You do **not** need to re-run specify/pl
 
 1. Read [constitution](../.specify/memory/constitution.md) (dual north star).
 2. Skim [spec.md](../specs/001-quest-deck/spec.md) acceptance scenarios.
-3. Open [tasks.md](../specs/001-quest-deck/tasks.md) and work **T001 → T026** in order (respect phase gates).
+3. Open [tasks.md](../specs/001-quest-deck/tasks.md) and work **T001 → T027** in order (respect phase gates).
 4. Prefer TDD where tasks say “write failing test first.”
 5. After a chunk of work, verify against the spec’s **Acceptance Scenarios** and **Success Criteria**—not only “tests pass.”
 6. Commit only when you (the human) ask to commit.
@@ -85,22 +85,55 @@ Example: “Add a fourth seed deck.”
 3. Implement and test.
 4. Do **not** only edit seed code and leave the spec stale.
 
-## Day-to-day: start a new feature (Phase 2+)
+## Active feature (important)
 
-```powershell
-# From repo root (PowerShell scripts ship with Spec Kit)
-& .\.specify\scripts\powershell\create-new-feature.ps1 -ShortName "streak-freeze" "Add optional streak freeze for missed days"
+Spec Kit does **not** infer the feature from your git branch. Commands resolve the target from:
+
+1. `SPECIFY_FEATURE_DIRECTORY` env (if set), else  
+2. [`.specify/feature.json`](../.specify/feature.json) → `feature_directory`
+
+Today that points at `specs/001-quest-deck` (correct while implementing Week-1). To work on Phase 2 MCQ:
+
+```json
+{ "feature_directory": "specs/002-mcq-cards" }
 ```
 
-Then in Cursor:
+Or set `export SPECIFY_FEATURE_DIRECTORY=specs/002-mcq-cards` for the session (Git Bash). Switch back to `001` when returning to MVP.
+
+## Shell: Git Bash (Windows)
+
+This repo standardizes on **Git Bash** for Spec Kit scripts and the integrated terminal:
+
+- Workspace setting: `.vscode/settings.json` → default profile **Git Bash**
+- Spec Kit scripts: `.specify/scripts/bash/*.sh` (`init-options` / integration `script: sh`)
+- Keep `feature_directory` in `.specify/feature.json` as a **relative** path with forward slashes (e.g. `specs/001-quest-deck`)
+- If `SPECIFY_FEATURE_DIRECTORY` is a Windows absolute path (`C:\…`), bash scripts break — use a relative value or unset it and rely on `feature.json`
+
+## Day-to-day: start a new feature (Phase 2+)
+
+**Preferred (official path):** in Cursor run `/speckit-specify` with the feature description. That creates `specs/NNN-short-name/`, writes `spec.md`, a `checklists/requirements.md`, and updates `feature.json`.
+
+**Alternate:** scaffold the folder first, then run skills against it:
+
+```bash
+# From repo root (Git Bash)
+./.specify/scripts/bash/create-new-feature.sh --short-name "streak-freeze" "Add optional streak freeze for missed days"
+```
+
+Then in Cursor (full path for production features):
 
 1. `/speckit-specify` — fill `specs/00N-…/spec.md`  
-2. `/speckit-plan` — `plan.md`  
-3. `/speckit-tasks` — `tasks.md`  
-4. Optional `/speckit-analyze`  
-5. `/speckit-implement`
+2. `/speckit-clarify` — resolve ambiguity  
+3. `/speckit-plan` — `plan.md` (+ research/data-model/contracts)  
+4. `/speckit-checklist` — optional quality gate  
+5. `/speckit-tasks` — `tasks.md`  
+6. `/speckit-analyze` — optional consistency check  
+7. `/speckit-implement`  
+8. `/speckit-converge` — after coding, close gaps vs spec  
 
-Keep Phase 2 ideas aligned with the constitution’s **out of MVP** list until you intentionally promote them.
+Shorter path (small features): specify → plan → tasks → implement → converge.
+
+Keep Phase 2 ideas aligned with the constitution’s **out of MVP** list until you intentionally promote them. Hand-writing the six files (as with `002-mcq-cards`) is OK if content matches templates — but still update `feature.json` before `/speckit-implement`, and prefer the skills next time so checklists stay in sync.
 
 ## CLI cheat sheet
 
@@ -111,10 +144,12 @@ specify self check
 specify self upgrade
 ```
 
-Re-init in an existing repo (rare; already done):
+Re-init / switch script type (rare):
 
 ```bash
-specify init --here --force --integration cursor-agent --script ps --ignore-agent-tools
+specify integration upgrade --script sh --force
+# or full re-init:
+specify init --here --force --integration cursor-agent --script sh --ignore-agent-tools
 ```
 
 ## Relationship to earlier drafts

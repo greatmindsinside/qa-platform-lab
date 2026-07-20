@@ -19,56 +19,40 @@ Built for two outcomes at once:
 | ----- | --- |
 | [Spec-Driven Development (Spec Kit)](docs/spec-driven-development.md) | Building/changing with agents — constitution → spec → plan → tasks → implement |
 | [Using Quest Deck](docs/using-quest-deck.md) | Interview prep once the app is running |
+| [Quality architecture](docs/quality-architecture.md) | Test pyramid & tags |
+| [Demo script](docs/demo.md) | 5-minute interview walkthrough |
 
-## Current status
-
-| Area | State |
-| ---- | ----- |
-| SDD toolchain | **GitHub Spec Kit** initialized (Cursor agent skills) |
-| Constitution | **Ratified** — [`.specify/memory/constitution.md`](.specify/memory/constitution.md) |
-| Feature spec / plan / tasks | **Ready** — [`specs/001-quest-deck/`](specs/001-quest-deck/) |
-| How-to docs | **Ready** — [`docs/`](docs/) |
-| App / API / UI | **Not started** — implement via [`tasks.md`](specs/001-quest-deck/tasks.md) |
-| Tests & CI | Docs CI green; app smoke gates pending MVP |
-| Clone → `test:smoke` in 5 minutes | **Pending** MVP |
-
-## Spec-Driven Development (summary)
-
-This repo uses **[GitHub Spec Kit](https://github.com/github/spec-kit)**. Specs are the source of truth; code follows. Full walkthrough: [docs/spec-driven-development.md](docs/spec-driven-development.md).
-
-| Artifact | Path |
-| -------- | ---- |
-| Constitution | [`.specify/memory/constitution.md`](.specify/memory/constitution.md) |
-| Spec | [`specs/001-quest-deck/spec.md`](specs/001-quest-deck/spec.md) |
-| Plan | [`specs/001-quest-deck/plan.md`](specs/001-quest-deck/plan.md) |
-| Tasks | [`specs/001-quest-deck/tasks.md`](specs/001-quest-deck/tasks.md) |
-| Quickstart | [`specs/001-quest-deck/quickstart.md`](specs/001-quest-deck/quickstart.md) |
-
-Cursor skills: `/speckit-constitution`, `/speckit-specify`, `/speckit-plan`, `/speckit-tasks`, `/speckit-implement`, `/speckit-analyze`.
-
-Historical brainstorming was migrated into Spec Kit; see [`docs/`](docs/) and [`specs/001-quest-deck/`](specs/001-quest-deck/).
-
-## What Quest Deck will be
-
-- **Decks & cards** — seeded Playwright, API/authz, and Behavioral (STAR) prompts (≥4 cards each)
-- **Practice loop** — prompt → optional hint → rate confidence → XP
-- **RPG-lite** — XP, levels, titles, streaks (formulas locked in the spec)
-- **RBAC** — invite a mentor; only deck admins can delete
-
-**Stack (planned):** Node 22+, TypeScript (strict), Fastify, SQLite, React/Vite, Vitest, Playwright, GitHub Actions.
-
-## Requirements (when MVP lands)
+## Quick start
 
 - Node.js **≥ 22**
-- Yarn 1 (classic)
+- Yarn 1 (classic) — `corepack enable` then `yarn` (packageManager pinned)
+- On Windows: use **Git Bash** (workspace default terminal; Spec Kit scripts are `.sh`)
 
 ```bash
 yarn install
 yarn workspace @lab/shared build
+yarn workspace @lab/testkit build
 yarn test:unit
 yarn test:smoke
 ```
 
+Prep UI (API + web in one command):
+
+```bash
+yarn install
+yarn workspace @lab/shared build
+yarn dev
+```
+
+Open `http://127.0.0.1:5173` — API listens on `3333` (Vite proxies `/api`).  
+Optional split terminals: `yarn dev:api` / `yarn dev:web`.
+
+Sign in: `admin@lab.local` / `Admin123!` or `member@lab.local` / `Member123!`.
+
+## Spec-Driven Development
+
+Canonical artifacts: [constitution](.specify/memory/constitution.md), [`specs/001-quest-deck/`](specs/001-quest-deck/), Phase 2 MCQ (shipped) in [`specs/002-mcq-cards/`](specs/002-mcq-cards/).
+
 ## Out of scope for MVP
 
-AI interviewer, boss fights, spaced repetition, streak freezes, leaderboards, OAuth, email, Postgres, Allure, axe, k6, Pact — see the constitution and feature spec.
+AI interviewer, boss fights, spaced repetition, streak freezes, leaderboards, OAuth, email, Postgres, card edit/delete — see constitution and feature spec.

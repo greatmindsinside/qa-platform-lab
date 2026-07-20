@@ -6,25 +6,50 @@ on:
     branches: [main]
 
 jobs:
-  check:
+  pr:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: yarn
+      - run: corepack enable
+      - run: yarn install --frozen-lockfile
+      - run: yarn workspace @lab/shared build
+      - run: yarn workspace @lab/testkit build
+      - run: yarn lint
+      - run: yarn typecheck
+      - run: yarn test:unit
+      - run: npx playwright install --with-deps chromium
+      - run: yarn test:smoke
+        env:
+          CI: true
 
-      - name: Verify Spec Kit + how-to docs
-        run: |
-          set -euo pipefail
-          test -f README.md
-          test -f .specify/memory/constitution.md
-          test -f specs/001-quest-deck/spec.md
-          test -f specs/001-quest-deck/plan.md
-          test -f specs/001-quest-deck/tasks.md
-          test -f docs/README.md
-          test -f docs/spec-driven-development.md
-          test -f docs/using-quest-deck.md
-          echo "Docs check passed."
-
-      # When the week-1 MVP lands (apps/, tests/, package.json), replace this job
-      # with the PR smoke / main full gates from specs/001-quest-deck/tasks.md (T022+)
-      - name: Placeholder for MVP test gates
-        run: echo "No app packages yet — MVP CI gates deferred until Spec Kit tasks T001+."
+  main:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: yarn
+      - run: corepack enable
+      - run: yarn install --frozen-lockfile
+      - run: yarn workspace @lab/shared build
+      - run: yarn workspace @lab/testkit build
+      - run: yarn lint
+      - run: yarn typecheck
+      - run: yarn test:unit
+      - run: npx playwright install --with-deps chromium
+      - run: yarn test:all
+        env:
+          CI: true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14

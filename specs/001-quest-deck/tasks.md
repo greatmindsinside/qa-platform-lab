@@ -14,11 +14,12 @@
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-**Purpose**: Monorepo scaffold
+**Purpose**: Monorepo scaffold + lint baseline
 
-- [ ] T001 Create Yarn workspaces root `package.json`, `tsconfig.base.json`, `.gitignore`
-- [ ] T002 [P] Stub `apps/api`, `apps/web`, `packages/shared`, `packages/testkit` package.json files
-- [ ] T003 Run `yarn install` and verify workspaces link
+- [x] T001 Create Yarn workspaces root `package.json`, `tsconfig.base.json`, `.gitignore` (scripts include `lint`, `typecheck`, `test:unit`, `test:smoke`)
+- [x] T002 [P] Stub `apps/api`, `apps/web`, `packages/shared`, `packages/testkit` package.json files
+- [x] T003 [P] Add ESLint flat config + `yarn lint` script (minimal TypeScript-aware rules)
+- [x] T004 Run `yarn install` and verify workspaces link; `yarn lint` runs (may be empty/clean)
 
 ---
 
@@ -26,44 +27,44 @@
 
 **Purpose**: Shared types, domain rules, DB — blocks all stories
 
-- [ ] T004 [P] [US1] Implement `@lab/shared` types + `SEED_USERS` + `isRole`/`isConfidence` in `packages/shared/src/index.ts`
-- [ ] T005 [P] [US1] Write failing unit tests `tests/unit/rbac.test.ts` and `tests/unit/progression.test.ts`
-- [ ] T006 [US1] Implement `apps/api/src/domain/rbac.ts` and `progression.ts` to pass T005
-- [ ] T007 [P] [US1] Write failing `tests/unit/seed.test.ts` (3 decks, ≥12 cards, STAR present)
-- [ ] T008 [US1] Implement `apps/api/src/data/db.ts`, `http/password.ts`, `seed.ts` (no circular db↔seed)
-- [ ] T009 Install API deps: fastify, cors, jose, better-sqlite3, bcryptjs, tsx
-- [ ] T010 [P] Create stores: `user-store.ts`, `deck-store.ts`, `progress-store.ts`
-- [ ] T011 Create `HttpError`, `token.ts`, `auth-guard.ts`, `buildApp` composition root + `server.ts`
-- [ ] T012 Write failing `tests/unit/api-quest-deck.test.ts` (health, login, me, practice XP, RBAC delete)
-- [ ] T013 Implement auth/deck/practice services + routes per `contracts/rest-api.md` until T012 passes
+- [x] T005 [P] [US1] Implement `@lab/shared` types + `SEED_USERS` + `isRole`/`isConfidence` in `packages/shared/src/index.ts`
+- [x] T006 [P] [US1] Write failing unit tests `tests/unit/rbac.test.ts` and `tests/unit/progression.test.ts` (include `xpIntoLevel` / `xpToNextLevel`)
+- [x] T007 [US1] Implement `apps/api/src/domain/rbac.ts` and `progression.ts` to pass T006
+- [x] T008 [P] [US1] Write failing `tests/unit/seed.test.ts` (3 decks, ≥12 cards, STAR present, **member membership on all three**)
+- [x] T009 [US1] Implement `apps/api/src/data/db.ts`, `http/password.ts`, `seed.ts` (no circular db↔seed; seed member on all decks)
+- [x] T010 Install API deps: fastify, cors, jose, better-sqlite3, bcryptjs, tsx
+- [x] T011 [P] Create stores: `user-store.ts`, `deck-store.ts`, `progress-store.ts`
+- [x] T012 Create `HttpError`, `token.ts`, `auth-guard.ts`, `buildApp` composition root + `server.ts`
+- [x] T013 Write failing `tests/unit/api-quest-deck.test.ts` (health, login, me with xp fields, practice XP, member 403 delete, **membership-admin delete 204**)
+- [x] T014 Implement auth/deck/practice services + routes per `contracts/rest-api.md` until T013 passes (`masteryPercent` on list decks)
 
-**Checkpoint**: Domain + API inject tests green; seed decks usable via API
+**Checkpoint**: Domain + API inject tests green; both seed users can list/practice seeded decks via API
 
 ---
 
 ## Phase 3: User Story 1 — Practice + progression (P1) 🎯
 
-**Goal**: Useful prep loop with XP/streak and Show hint  
-**Independent Test**: Practice one seeded card; Home/me shows XP and streak
+**Goal**: Useful prep loop with XP/streak/Show hint/XP bar  
+**Independent Test**: Practice one seeded card as admin or member; Home shows XP bar + streak
 
-- [ ] T014 [P] [US1] Implement `packages/testkit` `ApiClient` + Playwright `playwright.config.ts`
-- [ ] T015 [P] [US1] API specs `tests/api/auth.spec.ts`, `practice-xp.spec.ts` with `@smoke` tags
-- [ ] T016 [US1] Scaffold Vite React app; `lib/api.ts` (no testkit import); Login + Home + Practice with Show hint
-- [ ] T017 [US1] E2E `tests/e2e/login.spec.ts`, `practice.spec.ts` + fixtures `asAdmin`/`asMember`
-- [ ] T018 [US1] Manual prep check: STAR deck + hint + XP — would you use this tomorrow?
+- [x] T015 [P] [US1] Implement `packages/testkit` `ApiClient` + Playwright `playwright.config.ts`
+- [x] T016 [P] [US1] API specs `tests/api/auth.spec.ts`, `practice-xp.spec.ts` with `@smoke` tags
+- [x] T017 [US1] Scaffold Vite React app; `lib/api.ts` (no testkit import); Login + Home (XP bar + mastery %) + Practice with Show hint
+- [x] T018 [US1] E2E `tests/e2e/login.spec.ts`, `practice.spec.ts` + fixtures `asAdmin`/`asMember` (member must see seeded decks)
+- [x] T019 [US1] Manual prep check: STAR deck + hint + XP as admin **and** member — would you use this tomorrow?
 
-**Checkpoint**: US1 demoable end-to-end
+**Checkpoint**: US1 demoable end-to-end for both seed accounts
 
 ---
 
 ## Phase 4: User Story 2 — Decks, invite, RBAC (P2)
 
-**Goal**: Create/invite/delete authz  
-**Independent Test**: Member 403 delete; admin 204
+**Goal**: Create/invite/delete authz (membership-based)  
+**Independent Test**: Member 403 delete; admin 204; membership-admin allow
 
-- [ ] T019 [P] [US2] API spec `tests/api/rbac-delete.spec.ts` `@smoke @rbac`
-- [ ] T020 [US2] UI Deck detail: create deck, invite, delete deck + 403 message
-- [ ] T021 [US2] Cross-layer `tests/cross-layer/invite.spec.ts` `@smoke`
+- [x] T020 [P] [US2] API specs `tests/api/rbac-delete.spec.ts` `@smoke @rbac` (include membership-vs-global-role case)
+- [x] T021 [US2] UI Deck detail: create deck, invite, delete deck + 403 message
+- [x] T022 [US2] Cross-layer `tests/cross-layer/invite.spec.ts` `@smoke`
 
 **Checkpoint**: US2 + cross-layer green
 
@@ -74,9 +75,9 @@
 **Goal**: Hiring-manager clone path  
 **Independent Test**: CI workflow + README smoke instructions
 
-- [ ] T022 [US3] `.github/workflows/ci.yml` PR smoke + main full + artifacts
-- [ ] T023 [P] [US3] `docs/quality-architecture.md` + `docs/demo.md`
-- [ ] T024 [US3] Finalize README (dual purpose + commands); local gate: typecheck, unit, smoke, full Playwright
+- [x] T023 [US3] **Replace** `.github/workflows/ci.yml` docs-only job with PR = lint + typecheck + unit + `@smoke`; `main` = full suite + HTML report artifact
+- [x] T024 [P] [US3] `docs/quality-architecture.md` + `docs/demo.md`
+- [x] T025 [US3] Finalize README (dual purpose + commands); local gate: lint, typecheck, unit, smoke, full Playwright
 
 **Checkpoint**: Portfolio packaging complete
 
@@ -84,15 +85,15 @@
 
 ## Phase 6: Polish
 
-- [ ] T025 Run `/speckit-analyze` mindset: tasks vs spec coverage; fix gaps
-- [ ] T026 Confirm constitution non-goals not implemented
+- [x] T026 Run `/speckit-analyze` mindset: tasks vs spec coverage; fix gaps
+- [x] T027 Confirm constitution non-goals not implemented (no card edit/delete, no AI, etc.)
 
 ## Parallel opportunities
 
-- T004 ∥ T005 after T003  
-- T014 ∥ T015 after T013  
-- T019 ∥ T020 after US1 UI shell exists  
+- T005 ∥ T006 after T004  
+- T015 ∥ T016 after T014  
+- T020 ∥ T021 after US1 UI shell exists  
 
 ## Definition of done
 
-All FR/SC in `spec.md` satisfied; constitution dual north star held; `yarn test:smoke` green.
+All FR/SC in `spec.md` satisfied; constitution dual north star held; `yarn lint` + `yarn test:smoke` green.
