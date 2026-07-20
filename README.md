@@ -5,7 +5,7 @@
 
 **Quest Deck** is a gamified QA/SDET interview-prep app, owned end-to-end as a TypeScript quality proof (unit → API → E2E → cross-layer).
 
-![Quest Deck Home: Beginner Start here path](docs/assets/quest-deck-home.svg)
+![Quest Deck Home: Beginner Start here path](docs/assets/quest-deck-home.png)
 
 > **Status:** App MVP is runnable locally and via Docker. PR CI runs lint, typecheck, unit, and `@smoke`; `main` runs the full Playwright suite and uploads the HTML report. Spec packages cover the product through learning path (`003`); memory tips (`004`) are specified and planned next.
 
