@@ -1,0 +1,115 @@
+openapi: 3.0.3
+info:
+  title: Quest Deck API
+  version: '1.0'
+  description: >
+    Minimal OpenAPI surface for the Quest Deck AUT. Authoritative narrative contracts
+    live under specs/*/contracts/rest-api.md; this file is the machine-readable starter.
+servers:
+  - url: http://127.0.0.1:3333
+paths:
+  /api/health:
+    get:
+      summary: Liveness
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok]
+                properties:
+                  ok:
+                    type: boolean
+  /api/auth/login:
+    post:
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: Token + user
+        '401':
+          description: Invalid credentials
+  /api/me:
+    get:
+      summary: Current user profile + progression
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: PublicUser
+        '401':
+          description: Unauthorized
+  /api/decks:
+    get:
+      summary: List decks for caller
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Deck array (includes stage, recommendedStart, masteryPercent)
+    post:
+      summary: Create deck (caller becomes deck admin)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201':
+          description: Created
+  /api/decks/{id}:
+    delete:
+      summary: Delete deck (membership admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '204':
+          description: Deleted
+        '403':
+          description: Not deck admin
+  /api/cards/{id}/practice:
+    post:
+      summary: Practice open (confidence) or MCQ (selectedIndex)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  required: [confidence]
+                  properties:
+                    confidence:
+                      type: string
+                      enum: [learning, solid, mastered]
+                - type: object
+                  required: [selectedIndex]
+                  properties:
+                    selectedIndex:
+                      type: integer
+                      minimum: 0
+                      maximum: 3
+      responses:
+        '200':
+          description: PracticeResult (XP + optional MCQ grade fields)
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

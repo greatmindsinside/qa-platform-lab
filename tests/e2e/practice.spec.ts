@@ -2,17 +2,14 @@
  * @fileoverview E2E deck session via Start here (@smoke @progression).
  */
 
-import { CURRICULUM_DECKS, SEED_USERS } from '@lab/shared';
+import { CURRICULUM_DECKS } from '@lab/shared';
 import { expect, test } from '../fixtures';
 
-test('practice deck auto-advances @smoke @progression', async ({ page }) => {
-  await page.goto('/login');
-  await page.getByLabel('Email').fill(SEED_USERS.admin.email);
-  await page.getByLabel('Password').fill(SEED_USERS.admin.password);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(
-    page.getByRole('progressbar', { name: 'XP toward next level' }),
-  ).toBeVisible();
+test('practice deck auto-advances @smoke @progression', async ({
+  page,
+  loginAs,
+}) => {
+  await loginAs('admin');
 
   await page
     .getByRole('listitem')

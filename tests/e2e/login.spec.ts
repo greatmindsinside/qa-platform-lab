@@ -5,7 +5,7 @@
 import { CURRICULUM_DECKS, SEED_USERS } from '@lab/shared';
 import { expect, test } from '../fixtures';
 
-test('login page @smoke @auth', async ({ page }) => {
+test('login page @smoke @auth', async ({ page, loginAs }) => {
   await page.goto('/login');
   await expect(page.getByText('Quest Deck')).toBeVisible();
 
@@ -14,10 +14,8 @@ test('login page @smoke @auth', async ({ page }) => {
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByText(/Invalid email or password/i)).toBeVisible();
 
-  await page.getByLabel('Password').fill(SEED_USERS.member.password);
-  await page.getByRole('button', { name: 'Sign in' }).click();
+  await loginAs('member');
   await expect(page.getByText(/Streak/)).toBeVisible();
-  await expect(page.getByRole('progressbar', { name: 'XP toward next level' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Beginner' })).toBeVisible();
   await expect(page.getByText(CURRICULUM_DECKS.foundations)).toBeVisible();
   await expect(page.getByText(CURRICULUM_DECKS.applied)).toBeVisible();
