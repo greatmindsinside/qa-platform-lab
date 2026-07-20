@@ -2,57 +2,68 @@
 
 [![ci](https://github.com/greatmindsinside/qa-platform-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/greatmindsinside/qa-platform-lab/actions/workflows/ci.yml)
 
-**Quest Deck** — a gamified interview-prep app you can actually use, plus the TypeScript quality system that owns it (unit → API → E2E → cross-layer).
+**Quest Deck** is a gamified QA/SDET interview-prep app, owned end-to-end as a TypeScript quality proof (unit → API → E2E → cross-layer).
 
-Built for two outcomes at once:
+> **Status:** App MVP is implemented and runnable. PR CI runs lint, typecheck, unit, and `@smoke`; `main` runs the full Playwright suite. Spec Kit packages cover the product through learning path (`003`); memory tips (`004`) are specified and planned next.
 
-1. **Interview prep** — practice QA/SDET and behavioral (STAR) prompts with XP, levels, titles, and streaks
-2. **Job portfolio** — prove quality-engineering ownership to hiring managers (owned AUT, risk-based tests, CI gates)
+## Why this repo (for employers)
 
-> Designed and owned a full-stack TypeScript quality system (unit → API → E2E → cross-layer) with RBAC and progression-rule coverage for a gamified interview-prep app.
+- **Owned AUT:** a real product under test, not a throwaway demo page
+- **Layered test strategy:** Vitest unit + API inject + Playwright E2E/cross-layer, tagged (`@smoke`, `@auth`, `@rbac`, `@mutation`, `@progression`)
+- **Meaningful risk:** deck membership RBAC and XP/level/streak progression rules covered in tests
+- **Spec-Driven / TDD:** constitution → spec → plan → tasks → implement; domain rules fail first, then minimal code
 
-## How to use this repo
+## What Quest Deck is
 
-**Start here → [docs/README.md](docs/README.md)**
+Practice interview cards in decks (open flip + MCQ), earn XP/levels/titles/streaks, and follow a soft Beginner → Intermediate → Expert path on Home. Deck admins invite members; delete uses membership role, not a global admin shortcut.
 
-| Guide | For |
-| ----- | --- |
-| [Spec-Driven Development (Spec Kit)](docs/spec-driven-development.md) | Building/changing with agents — constitution → spec → plan → tasks → implement |
-| [Using Quest Deck](docs/using-quest-deck.md) | Interview prep once the app is running |
-| [Quality architecture](docs/quality-architecture.md) | Test pyramid & tags |
-| [Demo script](docs/demo.md) | 5-minute interview walkthrough |
+Seeded demos: `admin@lab.local` / `Admin123!` and `member@lab.local` / `Member123!`.
 
-## Quick start
+## Stack
 
-- Node.js **≥ 22**
-- Yarn 1 (classic) — `corepack enable` then `yarn` (packageManager pinned)
-- On Windows: use **Git Bash** (workspace default terminal; Spec Kit scripts are `.sh`)
+Node ≥ 22, Yarn 1, TypeScript, Fastify, SQLite, React/Vite, Vitest, Playwright, ESLint, GitHub Actions.
+
+## Run it (≤5 minutes)
 
 ```bash
 yarn install
 yarn workspace @lab/shared build
 yarn workspace @lab/testkit build
-yarn test:unit
 yarn test:smoke
 ```
 
-Prep UI (API + web in one command):
+Prep UI:
 
 ```bash
-yarn install
 yarn workspace @lab/shared build
 yarn dev
 ```
 
-Open `http://127.0.0.1:5173` — API listens on `3333` (Vite proxies `/api`).  
-Optional split terminals: `yarn dev:api` / `yarn dev:web`.
+Open `http://127.0.0.1:5173` (API on `3333`; Vite proxies `/api`).
 
-Sign in: `admin@lab.local` / `Admin123!` or `member@lab.local` / `Member123!`.
+## What's already in the repo
 
-## Spec-Driven Development
+| Artifact | Link |
+| -------- | ---- |
+| Project constitution | [`.specify/memory/constitution.md`](.specify/memory/constitution.md) |
+| MVP feature (complete) | [`specs/001-quest-deck/`](specs/001-quest-deck/) · [spec](specs/001-quest-deck/spec.md) · [plan](specs/001-quest-deck/plan.md) · [tasks](specs/001-quest-deck/tasks.md) · [API contract](specs/001-quest-deck/contracts/rest-api.md) |
+| MCQ cards | [`specs/002-mcq-cards/`](specs/002-mcq-cards/) |
+| Learning path | [`specs/003-learning-path/`](specs/003-learning-path/) |
+| Quality architecture | [`docs/quality-architecture.md`](docs/quality-architecture.md) |
+| 5-minute demo script | [`docs/demo.md`](docs/demo.md) |
 
-Canonical artifacts: [constitution](.specify/memory/constitution.md), [`specs/001-quest-deck/`](specs/001-quest-deck/), Phase 2 MCQ (shipped) in [`specs/002-mcq-cards/`](specs/002-mcq-cards/).
+## What's next
 
-## Out of scope for MVP
+1. Implement [memory tips](specs/004-memory-tips/) from the plan package (`/speckit-tasks` → implement)
+2. Keep `@smoke` green; extend coverage where the new tip field and practice UI need proof
 
-AI interviewer, boss fights, spaced repetition, streak freezes, leaderboards, OAuth, email, Postgres, card edit/delete — see constitution and feature spec.
+Out of MVP (still): AI interviewer, full SRS/Anki, OAuth, Postgres, card edit/delete. See the constitution.
+
+## For builders (secondary)
+
+| Guide | Use when |
+| ----- | -------- |
+| [docs/README.md](docs/README.md) | Doc index for both audiences |
+| [Spec-Driven Development](docs/spec-driven-development.md) | Changing the product with Spec Kit |
+| [Using Quest Deck](docs/using-quest-deck.md) | Interview prep sessions |
+| [`.cursor/skills/`](.cursor/skills/) | Agent skills for specify → plan → tasks → implement |
