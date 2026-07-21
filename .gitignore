@@ -20,3 +20,5 @@ blob-report/
 *.tmp
 *.swp
 apps/api/data/
+
+.worktrees/
