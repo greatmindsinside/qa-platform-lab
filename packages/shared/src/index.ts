@@ -84,6 +84,10 @@ export type Deck = {
   description: string;
   ownerUserId: number;
   masteryPercent?: number;
+  /** Total cards in the deck. */
+  cardCount: number;
+  /** Cards with any progress (non-null confidence). */
+  completedCount: number;
   /** Curriculum stage; null = outside the official learning path. */
   stage: LearningStage | null;
   /** Exactly one seeded Beginner deck should be true. */

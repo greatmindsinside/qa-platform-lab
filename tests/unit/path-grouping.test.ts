@@ -12,6 +12,8 @@ function deck(
   return {
     description: '',
     ownerUserId: 1,
+    cardCount: 0,
+    completedCount: 0,
     recommendedStart: false,
     ...partial,
   };

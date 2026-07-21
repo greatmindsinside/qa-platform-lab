@@ -64,6 +64,8 @@ export function mapDeck(
     description: row.description,
     ownerUserId: row.owner_user_id,
     masteryPercent: deckMasteryPercent(confidences),
+    cardCount: confidences.length,
+    completedCount: confidences.filter((c) => c != null).length,
     stage: row.stage ?? null,
     recommendedStart: Boolean(row.recommended_start),
   };

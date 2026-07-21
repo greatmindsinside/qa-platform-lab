@@ -49,6 +49,8 @@ describe('deck stage fields', () => {
     expect(created.json()).toMatchObject({
       stage: null,
       recommendedStart: false,
+      cardCount: 0,
+      completedCount: 0,
     });
   });
 
@@ -67,6 +69,9 @@ describe('deck stage fields', () => {
       name: string;
       stage: string | null;
       recommendedStart: boolean;
+      cardCount: number;
+      completedCount: number;
+      masteryPercent: number;
     }>;
     const foundations = decks.find(
       (d) => d.name === CURRICULUM_DECKS.foundations,
@@ -75,6 +80,11 @@ describe('deck stage fields', () => {
       stage: 'beginner',
       recommendedStart: true,
     });
+    expect(foundations!.cardCount).toBeGreaterThan(0);
+    expect(foundations!.completedCount).toBeGreaterThanOrEqual(0);
+    expect(foundations!.completedCount).toBeLessThanOrEqual(
+      foundations!.cardCount,
+    );
     expect(decks.filter((d) => d.recommendedStart)).toHaveLength(1);
   });
 });
