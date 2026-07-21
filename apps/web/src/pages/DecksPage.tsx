@@ -66,10 +66,6 @@ export function DecksPage({ token }: DecksPageProps) {
     <div className="stack shell-page">
       <header className="stack-sm">
         <h1 className="page-title">Decks</h1>
-        <p className="muted" style={{ margin: 0 }}>
-          Browse the Beginner → Intermediate → Expert path, or build your own
-          deck.
-        </p>
       </header>
 
       {error ? (
@@ -87,12 +83,6 @@ export function DecksPage({ token }: DecksPageProps) {
         ? sections.map((section) => (
             <section key={section.key} className="stack path-section">
               <h2 className="section-title">{section.title}</h2>
-              {section.key === 'beginner' ? (
-                <p className="muted path-section-hint" style={{ margin: 0 }}>
-                  Recommended first stop for foundations, then move up when
-                  ready.
-                </p>
-              ) : null}
               {section.key === 'yours' ? (
                 <details className="panel admin-details create-deck-panel">
                   <summary>Create a new deck</summary>
@@ -109,10 +99,6 @@ export function DecksPage({ token }: DecksPageProps) {
                     </label>
                     <button type="submit">Create deck</button>
                   </form>
-                  <p className="muted" style={{ margin: '0.5rem 0 0' }}>
-                    Custom decks appear under Your decks (not part of the
-                    curriculum path).
-                  </p>
                 </details>
               ) : null}
               {section.decks.length === 0 && section.key === 'yours' ? (

@@ -36,8 +36,13 @@ test('adventure completes with takeaways and XP @smoke @progression', async ({
     .getByRole('link', { name: 'Quests' })
     .click();
   await expect(page.getByText('Flaky Friday').first()).toBeVisible();
-  page.once('dialog', (dialog) => void dialog.accept());
   await page.getByRole('button', { name: 'Restart' }).click();
+  await expect(page.getByRole('group', { name: 'Choices' })).toBeVisible();
+
+  // Mid-run Restart offers Undo (no confirm dialog).
+  await page.getByRole('button', { name: STRONG_PATH[0] }).click();
+  await page.getByRole('button', { name: 'Restart' }).click();
+  await expect(page.getByRole('button', { name: 'Undo' })).toBeVisible();
   await expect(page.getByRole('group', { name: 'Choices' })).toBeVisible();
 
   for (const label of STRONG_PATH) {

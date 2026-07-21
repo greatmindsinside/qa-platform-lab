@@ -1,8 +1,8 @@
 /**
- * @fileoverview Deck detail — RPG dashboard layout (Active Quest + contents + rail).
+ * @fileoverview Deck detail — practice hub + contents + management rail.
  *
- * **What:** Mockup-aligned deck hub with practice CTA, card grid, invite/delete.
- * **Why:** Employer-facing visual polish while keeping real prep/RBAC flows.
+ * **What:** Deck name, mastery, card list, practice CTA, invite/delete for admins.
+ * **Why:** Real prep/RBAC flows without dashboard garnish.
  */
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
@@ -24,12 +24,6 @@ export type DeckDetailPageProps = {
 };
 
 const EMPTY_OPTIONS: [string, string, string, string] = ['', '', '', ''];
-
-const STUDY_TIPS = [
-  { t: 'Tip', text: 'Practice sessions award XP when you rate open cards or grade MCQs.' },
-  { t: 'Tip', text: 'Deck mastery rises as you mark cards solid or mastered.' },
-  { t: 'Tip', text: 'Invite a collaborator if you want a mentor on this deck.' },
-] as const;
 
 function MasteryRing({ percent }: { percent: number }) {
   const p = Math.max(0, Math.min(100, percent));
@@ -55,7 +49,7 @@ function MasteryRing({ percent }: { percent: number }) {
 }
 
 /**
- * Deck hub: Active Quest hero, contents grid, practice + management rail.
+ * Deck hub: name + mastery, contents grid, practice + management rail.
  */
 export function DeckDetailPage({
   token,
@@ -203,18 +197,16 @@ export function DeckDetailPage({
           <section className="active-quest panel">
             <div className="active-quest-body">
               <div className="active-quest-meta">
-                <span className="active-quest-badge">Active Quest</span>
                 <span className="muted">
                   {deck.recommendedStart
-                    ? 'Recommended start'
+                    ? 'Start here'
                     : `${stageLabel} path`}
                 </span>
               </div>
               <h1 className="active-quest-title">{deck.name}</h1>
-              <p className="active-quest-desc">
-                {deck.description ||
-                  'Practice this deck to build mastery and earn XP.'}
-              </p>
+              {deck.description ? (
+                <p className="active-quest-desc">{deck.description}</p>
+              ) : null}
             </div>
             <MasteryRing percent={mastery} />
           </section>
@@ -222,11 +214,11 @@ export function DeckDetailPage({
           <section className="deck-contents stack-sm">
             <div className="deck-contents-head row">
               <h2 className="section-title" style={{ margin: 0 }}>
-                Deck Contents (
+                Cards (
                   {cardQuery.trim()
                     ? `${filtered.length} of ${cards.length}`
-                    : cards.length}{' '}
-                  Cards)
+                    : cards.length}
+                )
               </h2>
               <label className="deck-search">
                 <span className="visually-hidden">Search cards</span>
@@ -243,7 +235,7 @@ export function DeckDetailPage({
             {filtered.length === 0 ? (
               <p className="muted">
                 {cards.length === 0
-                  ? 'No cards yet — add some under Deck Management.'
+                  ? 'No cards. Add cards under Deck Management.'
                   : 'No cards match your search.'}
               </p>
             ) : (
@@ -258,20 +250,12 @@ export function DeckDetailPage({
                         <span className={`deck-badge deck-badge-${c.kind}`}>
                           {c.kind === 'mcq' ? 'MCQ' : 'OPEN'}
                         </span>
-                        <span className="quest-card-dots" aria-hidden>
-                          ···
-                        </span>
                       </div>
                       <strong className="quest-card-title">
                         {c.prompt.length > 72
                           ? `${c.prompt.slice(0, 72)}…`
                           : c.prompt}
                       </strong>
-                      <p className="quest-card-snip muted">
-                        {c.kind === 'mcq'
-                          ? 'Multiple choice — pick A–D and get instant feedback.'
-                          : 'Open response — flip for hint, then rate confidence.'}
-                      </p>
                     </Link>
                   </li>
                 ))}
@@ -288,28 +272,13 @@ export function DeckDetailPage({
         </div>
 
         <aside className="deck-rail stack">
-          <div className="rail-card rail-rank">
-            <div className="rail-rank-art" aria-hidden>
-              {user.displayName.trim().charAt(0).toUpperCase() || 'Q'}
-            </div>
-            <div>
-              <p className="rail-rank-name">{user.title}</p>
-              <p className="muted rail-rank-sub">
-                Level {user.level} · {user.xpIntoLevel}/100 to next
-              </p>
-            </div>
-          </div>
-
           {cards.length > 0 ? (
             <Link
               className="start-practice-cta"
               to={`/decks/${deckId}/play`}
             >
-              <span className="start-practice-icon" aria-hidden>
-                ⚔
-              </span>
               <span className="start-practice-copy">
-                <strong>Start Practice</strong>
+                <strong>Practice</strong>
                 <small>Full deck session</small>
               </span>
             </Link>
@@ -453,23 +422,6 @@ export function DeckDetailPage({
               {members.map((m) => (
                 <li key={m.userId}>
                   {m.email} ({m.role})
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="rail-card combat-log">
-            <h3 className="rail-heading combat-log-title">
-              <span className="combat-dot" aria-hidden />
-              Study tips
-            </h3>
-            <p className="muted" style={{ margin: 0, fontSize: '0.82rem' }}>
-              Guidance for this hub — not a live activity feed.
-            </p>
-            <ul className="combat-log-list">
-              {STUDY_TIPS.map((row) => (
-                <li key={row.text}>
-                  <span className="combat-time">[{row.t}]</span> {row.text}
                 </li>
               ))}
             </ul>

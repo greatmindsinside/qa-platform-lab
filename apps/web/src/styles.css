@@ -217,17 +217,6 @@ label {
   letter-spacing: 0.08em;
   color: var(--cyan);
   text-shadow: var(--glow-cyan);
-  animation: brand-pulse 4.5s ease-in-out infinite;
-}
-
-@keyframes brand-pulse {
-  0%,
-  100% {
-    text-shadow: 0 0 12px rgba(0, 232, 255, 0.3);
-  }
-  50% {
-    text-shadow: 0 0 28px rgba(0, 232, 255, 0.55), 0 0 48px rgba(255, 42, 109, 0.15);
-  }
 }
 
 .muted {
@@ -265,17 +254,6 @@ label {
   height: 100%;
   background: linear-gradient(90deg, var(--bar-fill-a), var(--bar-fill-b));
   box-shadow: 0 0 12px rgba(0, 232, 255, 0.55);
-  animation: bar-shimmer 2.8s linear infinite;
-  background-size: 200% 100%;
-}
-
-@keyframes bar-shimmer {
-  0% {
-    background-position: 100% 0;
-  }
-  100% {
-    background-position: -100% 0;
-  }
 }
 
 .deck-list {
@@ -315,18 +293,6 @@ label {
 .login-panel {
   max-width: 420px;
   margin: 3rem auto;
-  animation: panel-in 0.55s ease-out;
-}
-
-@keyframes panel-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .hint {
@@ -458,6 +424,19 @@ label {
   color: var(--cyan);
   font-weight: 600;
   text-decoration: none;
+}
+
+button.text-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+button.text-link:hover:not(:disabled) {
+  transform: none;
 }
 
 .text-link:hover {
@@ -601,18 +580,6 @@ label {
   background: rgba(0, 232, 255, 0.1);
   border: 1px solid rgba(0, 232, 255, 0.35);
   box-shadow: var(--glow-cyan);
-  animation: xp-toast-in 0.35s ease-out;
-}
-
-@keyframes xp-toast-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .xp-toast-amount {
@@ -812,18 +779,6 @@ button.practice-cta-link {
   gap: 0.85rem;
   justify-items: center;
   perspective: 1200px;
-  animation: flip-deal-in 0.5s ease-out;
-}
-
-@keyframes flip-deal-in {
-  from {
-    opacity: 0;
-    transform: translateY(16px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
 }
 
 .flip-card {
@@ -888,7 +843,7 @@ button.practice-cta-link {
   isolation: isolate;
 }
 
-/* Shimmering gold rim */
+/* Gold rim (static) */
 .flip-face::before {
   content: '';
   position: absolute;
@@ -906,8 +861,6 @@ button.practice-cta-link {
     #b8860b 82%,
     #ffe9a0 100%
   );
-  background-size: 280% 280%;
-  animation: gold-edge-shimmer 2.8s linear infinite;
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
@@ -918,62 +871,6 @@ button.practice-cta-link {
   mask-composite: exclude;
   pointer-events: none;
   z-index: 3;
-}
-
-/* Twinkling sparkles along the rim */
-.flip-face::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  z-index: 4;
-  background-image:
-    radial-gradient(circle at 6% 10%, #fffef5 0 1.2px, transparent 2.2px),
-    radial-gradient(circle at 18% 4%, #ffe566 0 1px, transparent 2px),
-    radial-gradient(circle at 38% 3%, #fff8dc 0 1.4px, transparent 2.5px),
-    radial-gradient(circle at 62% 5%, #ffd700 0 1px, transparent 2px),
-    radial-gradient(circle at 82% 8%, #fffef5 0 1.3px, transparent 2.3px),
-    radial-gradient(circle at 94% 16%, #ffe9a0 0 1px, transparent 2px),
-    radial-gradient(circle at 96% 42%, #fff8dc 0 1.2px, transparent 2.2px),
-    radial-gradient(circle at 97% 72%, #ffd700 0 1px, transparent 2px),
-    radial-gradient(circle at 90% 92%, #fffef5 0 1.4px, transparent 2.5px),
-    radial-gradient(circle at 68% 96%, #ffe566 0 1px, transparent 2px),
-    radial-gradient(circle at 42% 97%, #fff8dc 0 1.2px, transparent 2.2px),
-    radial-gradient(circle at 14% 94%, #ffd700 0 1px, transparent 2px),
-    radial-gradient(circle at 4% 78%, #fffef5 0 1.3px, transparent 2.3px),
-    radial-gradient(circle at 3% 48%, #ffe9a0 0 1px, transparent 2px),
-    radial-gradient(circle at 5% 28%, #fff8dc 0 1.2px, transparent 2.2px);
-  animation: gold-sparkle-twinkle 1.6s ease-in-out infinite alternate;
-  mix-blend-mode: screen;
-}
-
-@keyframes gold-edge-shimmer {
-  0% {
-    background-position: 0% 50%;
-  }
-  100% {
-    background-position: 100% 50%;
-  }
-}
-
-@keyframes gold-sparkle-twinkle {
-  0% {
-    opacity: 0.55;
-    filter: brightness(0.95);
-  }
-  40% {
-    opacity: 1;
-    filter: brightness(1.25);
-  }
-  70% {
-    opacity: 0.7;
-    filter: brightness(1.05);
-  }
-  100% {
-    opacity: 1;
-    filter: brightness(1.35);
-  }
 }
 
 .flip-front {
@@ -1875,20 +1772,6 @@ button.practice-cta-link {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-brand,
-  .xp-bar > span,
-  .login-panel,
-  .flip-stage,
-  .flip-face::before,
-  .flip-face::after,
-  .xp-toast {
-    animation: none;
-  }
-
-  .flip-face::after {
-    opacity: 0.85;
-  }
-
   .flip-card-inner {
     transition: none;
   }

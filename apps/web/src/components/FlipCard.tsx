@@ -1,8 +1,8 @@
 /**
  * @fileoverview 3D flip flashcard (open practice).
  *
- * **What:** Front = prompt; back = answer hint. Click or Reveal flips via CSS 3D.
- * **Why:** Game-feel without changing practice/XP contracts — pure presentation.
+ * **What:** Front = prompt; back = answer hint. Click or Show hint flips.
+ * **Why:** Pure presentation — practice/XP stay on the server.
  */
 
 export type FlipCardProps = {
@@ -10,7 +10,7 @@ export type FlipCardProps = {
   answerHint: string;
   flipped: boolean;
   onFlip: () => void;
-  /** When true, skip the 3D rotate transition (used on deck auto-advance). */
+  /** When true, skip the 3D rotate transition (used on card change). */
   instantSwap?: boolean;
 };
 
@@ -40,7 +40,6 @@ export function FlipCard({
           >
             <span className="flip-face-label">Question</span>
             <p className="flip-face-body">{prompt}</p>
-            <span className="flip-face-cue">Click or press Enter to flip</span>
           </div>
           <div
             className="flip-face flip-back"
@@ -50,7 +49,6 @@ export function FlipCard({
             <p className="flip-face-body hint">
               {answerHint || 'No hint yet.'}
             </p>
-            <span className="flip-face-cue">Click or press Enter to flip back</span>
           </div>
         </div>
       </button>

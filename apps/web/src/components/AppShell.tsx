@@ -160,15 +160,8 @@ export function AppShell({
       </div>
 
       <footer className="shell-footer">
-        <p className="shell-footer-links">
-          <Link to="/support">Support</Link>
-          <span aria-hidden>·</span>
-          <Link to="/settings">Settings</Link>
-          <span aria-hidden>·</span>
-          <Link to="/leaderboard">Leaderboard</Link>
-        </p>
         <p className="shell-footer-copy">
-          © {new Date().getFullYear()} Quest Deck. Master Your Craft.
+          © {new Date().getFullYear()} Quest Deck
         </p>
       </footer>
     </div>

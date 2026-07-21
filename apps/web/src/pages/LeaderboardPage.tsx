@@ -39,9 +39,6 @@ export function LeaderboardPage({ token, user }: LeaderboardPageProps) {
     <div className="stack shell-page">
       <header className="stack-sm">
         <h1 className="page-title">Leaderboard</h1>
-        <p className="muted" style={{ margin: 0 }}>
-          Lab rankings by total XP. Practice decks and complete quests to climb.
-        </p>
       </header>
 
       {error ? (
@@ -56,7 +53,7 @@ export function LeaderboardPage({ token, user }: LeaderboardPageProps) {
       ) : null}
 
       {!loading && rows.length === 0 ? (
-        <p className="muted">No learners yet — be the first to earn XP.</p>
+        <p className="muted">No learners yet.</p>
       ) : null}
 
       {!loading && rows.length > 0 ? (

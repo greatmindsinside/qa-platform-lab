@@ -1,8 +1,8 @@
 /**
- * @fileoverview Full-deck practice session with auto-advance + session HUD.
+ * @fileoverview Full-deck practice session with user-paced Next.
  *
- * **What:** Walk every card; progress bar, XP toast, MCQ feedback, flip-gated ratings.
- * **Why:** Prep sessions need a continuous, self-explanatory loop.
+ * **What:** Walk every card; progress bar, inline result, Next to advance.
+ * **Why:** Prep sessions without auto-advance delay theater.
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -12,7 +12,6 @@ import { FlipCard } from '../components/FlipCard';
 import { api } from '../lib/api';
 
 const OPTION_LABELS = ['A', 'B', 'C', 'D'] as const;
-const AUTO_ADVANCE_MS = 1400;
 
 export type DeckPracticePageProps = {
   token: string;
@@ -31,13 +30,13 @@ type McqFeedback = {
   correctIndex: number;
 };
 
-type XpToast = {
+type CardResult = {
   line: string;
   xpAwarded: number;
 };
 
 /**
- * Deck play-through: HUD + auto-advance after each practice.
+ * Deck play-through: grade → result → Next.
  */
 export function DeckPracticePage({ token, onUser }: DeckPracticePageProps) {
   const { id } = useParams();
@@ -48,19 +47,17 @@ export function DeckPracticePage({ token, onUser }: DeckPracticePageProps) {
   const [flipped, setFlipped] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [advancing, setAdvancing] = useState(false);
   const [summary, setSummary] = useState<SessionSummary | null>(null);
   const [instantSwap, setInstantSwap] = useState(false);
   const [mcqFeedback, setMcqFeedback] = useState<McqFeedback | null>(null);
-  const [xpToast, setXpToast] = useState<XpToast | null>(null);
+  const [cardResult, setCardResult] = useState<CardResult | null>(null);
 
-  const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const indexRef = useRef(0);
   const cardsLengthRef = useRef(0);
   const practiceLockRef = useRef(false);
-  const advanceScheduledRef = useRef(false);
   const xpEarnedRef = useRef(0);
   const practicedRef = useRef(0);
+  const lastStreakRef = useRef(0);
 
   useEffect(() => {
     indexRef.current = index;
@@ -69,12 +66,6 @@ export function DeckPracticePage({ token, onUser }: DeckPracticePageProps) {
   useEffect(() => {
     cardsLengthRef.current = cards.length;
   }, [cards.length]);
-
-  useEffect(() => {
-    return () => {
-      if (advanceTimer.current) clearTimeout(advanceTimer.current);
-    };
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -99,11 +90,11 @@ export function DeckPracticePage({ token, onUser }: DeckPracticePageProps) {
         indexRef.current = 0;
         setFlipped(false);
         setMcqFeedback(null);
-        setXpToast(null);
+        setCardResult(null);
         setSummary(null);
         xpEarnedRef.current = 0;
         practicedRef.current = 0;
-        advanceScheduledRef.current = false;
+        lastStreakRef.current = 0;
         practiceLockRef.current = false;
       } catch (err) {
         if (!cancelled) {
@@ -116,68 +107,43 @@ export function DeckPracticePage({ token, onUser }: DeckPracticePageProps) {
     };
   }, [token, deckId]);
 
-  function clearAdvanceTimer() {
-    if (advanceTimer.current) {
-      clearTimeout(advanceTimer.current);
-      advanceTimer.current = null;
-    }
-  }
-
-  function finishSession(nextXp: number, nextPracticed: number, streak: number) {
-    advanceScheduledRef.current = false;
-    setAdvancing(false);
-    setXpToast(null);
+  function finishSession() {
     setSummary({
-      cardsPracticed: nextPracticed,
-      xpEarned: nextXp,
-      streak,
+      cardsPracticed: practicedRef.current,
+      xpEarned: xpEarnedRef.current,
+      streak: lastStreakRef.current,
     });
   }
 
-  function scheduleAdvance(streak: number) {
-    if (advanceScheduledRef.current) return;
-    advanceScheduledRef.current = true;
-    setAdvancing(true);
-    clearAdvanceTimer();
-
-    const fromIndex = indexRef.current;
-    const nextXp = xpEarnedRef.current;
-    const nextPracticed = practicedRef.current;
-
-    advanceTimer.current = setTimeout(() => {
-      advanceTimer.current = null;
-      const nextIndex = fromIndex + 1;
-      if (nextIndex >= cardsLengthRef.current) {
-        finishSession(nextXp, nextPracticed, streak);
-        return;
-      }
-      setInstantSwap(true);
-      indexRef.current = nextIndex;
-      setIndex(nextIndex);
-      setFlipped(false);
-      setMcqFeedback(null);
-      setXpToast(null);
-      setAdvancing(false);
-      advanceScheduledRef.current = false;
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => setInstantSwap(false));
-      });
-    }, AUTO_ADVANCE_MS);
+  function goNext() {
+    const nextIndex = indexRef.current + 1;
+    if (nextIndex >= cardsLengthRef.current) {
+      finishSession();
+      return;
+    }
+    setInstantSwap(true);
+    indexRef.current = nextIndex;
+    setIndex(nextIndex);
+    setFlipped(false);
+    setMcqFeedback(null);
+    setCardResult(null);
+    practiceLockRef.current = false;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => setInstantSwap(false));
+    });
   }
 
-  async function afterPractice(res: PracticeResult, toast: XpToast) {
-    const nextXp = xpEarnedRef.current + res.xpAwarded;
-    const nextPracticed = practicedRef.current + 1;
-    xpEarnedRef.current = nextXp;
-    practicedRef.current = nextPracticed;
-    setXpToast(toast);
+  async function afterPractice(res: PracticeResult, result: CardResult) {
+    xpEarnedRef.current += res.xpAwarded;
+    practicedRef.current += 1;
+    lastStreakRef.current = res.currentStreak;
+    setCardResult(result);
     onUser(await api.me(token));
-    scheduleAdvance(res.currentStreak);
   }
 
   async function rate(confidence: string) {
     const card = cards[indexRef.current];
-    if (!card || practiceLockRef.current || advanceScheduledRef.current) return;
+    if (!card || practiceLockRef.current || cardResult) return;
     if (!flipped) return;
     practiceLockRef.current = true;
     setError('');
@@ -193,15 +159,12 @@ export function DeckPracticePage({ token, onUser }: DeckPracticePageProps) {
       practiceLockRef.current = false;
     } finally {
       setBusy(false);
-      if (!advanceScheduledRef.current) {
-        practiceLockRef.current = false;
-      }
     }
   }
 
   async function selectOption(selectedIndex: number) {
     const card = cards[indexRef.current];
-    if (!card || practiceLockRef.current || advanceScheduledRef.current) return;
+    if (!card || practiceLockRef.current || cardResult) return;
     practiceLockRef.current = true;
     setError('');
     setBusy(true);
@@ -210,45 +173,36 @@ export function DeckPracticePage({ token, onUser }: DeckPracticePageProps) {
       const correct = res.correct ?? false;
       const correctIndex = res.correctIndex ?? 0;
       setMcqFeedback({ selectedIndex, correct, correctIndex });
-      const verdict = correct ? 'Correct!' : 'Incorrect';
-      const key = ` · answer ${OPTION_LABELS[correctIndex] ?? correctIndex}`;
+      const verdict = correct ? 'Correct' : 'Incorrect';
+      const key = correct
+        ? ''
+        : ` · answer ${OPTION_LABELS[correctIndex] ?? correctIndex}`;
       await afterPractice(res, {
         xpAwarded: res.xpAwarded,
-        line: `${verdict}${correct ? '' : key} · +${res.xpAwarded} XP`,
+        line: `${verdict}${key} · +${res.xpAwarded} XP`,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Practice failed');
       practiceLockRef.current = false;
     } finally {
       setBusy(false);
-      if (!advanceScheduledRef.current) {
-        practiceLockRef.current = false;
-      }
     }
   }
 
-  useEffect(() => {
-    if (!advancing && !summary) {
-      practiceLockRef.current = false;
-    }
-  }, [advancing, index, summary]);
-
   if (summary) {
     function restartSession() {
-      clearAdvanceTimer();
       setSummary(null);
       setIndex(0);
       indexRef.current = 0;
       setFlipped(false);
       setMcqFeedback(null);
-      setXpToast(null);
+      setCardResult(null);
       setError('');
-      setAdvancing(false);
       setInstantSwap(false);
-      advanceScheduledRef.current = false;
       practiceLockRef.current = false;
       xpEarnedRef.current = 0;
       practicedRef.current = 0;
+      lastStreakRef.current = 0;
     }
 
     return (
@@ -262,7 +216,6 @@ export function DeckPracticePage({ token, onUser }: DeckPracticePageProps) {
             {summary.cardsPracticed === 1 ? '' : 's'} practiced · streak{' '}
             {summary.streak}
           </p>
-          <p className="practice-guide">Nice work — keep the streak going tomorrow.</p>
           <div className="row session-complete-actions">
             <button type="button" className="practice-cta-link" onClick={restartSession}>
               Practice again
@@ -303,18 +256,8 @@ export function DeckPracticePage({ token, onUser }: DeckPracticePageProps) {
   const total = cards.length;
   const position = index + 1;
   const progressPct = Math.round((position / total) * 100);
-
-  const guide = advancing
-    ? position >= total
-      ? 'Finishing session…'
-      : 'Moving to next card…'
-    : isMcq
-      ? 'Pick A–D — next card opens automatically'
-      : flipped
-        ? 'Rate how solid you feel — next card opens automatically'
-        : 'Flip the card to reveal the hint, then rate your confidence';
-
-  const answeringLocked = busy || advancing || Boolean(xpToast);
+  const answeringLocked = busy || Boolean(cardResult);
+  const isLast = position >= total;
 
   function mcqOptionClass(optIndex: number): string {
     const base = 'mcq-option';
@@ -353,14 +296,6 @@ export function DeckPracticePage({ token, onUser }: DeckPracticePageProps) {
           {deckName || 'Practice'}
           {isMcq ? ' · MCQ' : ''}
         </h1>
-        <p className="practice-guide">{guide}</p>
-
-        {xpToast ? (
-          <div className="xp-toast" role="status" aria-live="polite">
-            <span className="xp-toast-amount">+{xpToast.xpAwarded} XP</span>
-            <span className="xp-toast-detail">{xpToast.line}</span>
-          </div>
-        ) : null}
 
         {isMcq ? (
           <>
@@ -394,11 +329,6 @@ export function DeckPracticePage({ token, onUser }: DeckPracticePageProps) {
                 if (!answeringLocked) setFlipped((v) => !v);
               }}
             />
-            <p className="muted practice-rate-hint">
-              {flipped
-                ? 'How confident do you feel?'
-                : 'Reveal the hint before rating'}
-            </p>
             <div className="row confidence-row">
               <button
                 type="button"
@@ -427,6 +357,17 @@ export function DeckPracticePage({ token, onUser }: DeckPracticePageProps) {
             </div>
           </>
         )}
+
+        {cardResult ? (
+          <div className="stack-sm">
+            <p className="practice-result" role="status">
+              {cardResult.line}
+            </p>
+            <button type="button" onClick={goNext}>
+              {isLast ? 'Finish' : 'Next'}
+            </button>
+          </div>
+        ) : null}
 
         {error ? (
           <p className="error" role="alert">

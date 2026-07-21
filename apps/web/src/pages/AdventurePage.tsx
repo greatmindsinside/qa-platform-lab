@@ -1,14 +1,21 @@
 /**
  * @fileoverview Immersive QA text adventure play screen.
  *
- * **What:** Scene prose, choice buttons, ending takeaways, restart.
+ * **What:** Scene prose, choice buttons, ending takeaways, restart with Undo.
  * **Why:** Sibling prep mode to deck practice — choice-driven, no parser.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { AdventureSceneView, AdventureSummary, PublicUser } from '@lab/shared';
 import { api } from '../lib/api';
+
+const UNDO_MS = 8000;
+
+type UndoSnapshot = {
+  scene: AdventureSceneView;
+  choiceIds: number[];
+};
 
 export type AdventurePageProps = {
   token: string;
@@ -20,6 +27,9 @@ export function AdventurePage({ token, onUser }: AdventurePageProps) {
   const [scene, setScene] = useState<AdventureSceneView | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [undoSnapshot, setUndoSnapshot] = useState<UndoSnapshot | null>(null);
+  const choicePathRef = useRef<number[]>([]);
+  const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -32,11 +42,35 @@ export function AdventurePage({ token, onUser }: AdventurePageProps) {
         }
         setSummary(first);
         setScene(await api.adventureScene(token, first.id));
+        choicePathRef.current = [];
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load adventure');
       }
     })();
   }, [token]);
+
+  useEffect(() => {
+    return () => {
+      if (undoTimer.current) clearTimeout(undoTimer.current);
+    };
+  }, []);
+
+  function clearUndo() {
+    if (undoTimer.current) {
+      clearTimeout(undoTimer.current);
+      undoTimer.current = null;
+    }
+    setUndoSnapshot(null);
+  }
+
+  function armUndo(snapshot: UndoSnapshot) {
+    if (undoTimer.current) clearTimeout(undoTimer.current);
+    setUndoSnapshot(snapshot);
+    undoTimer.current = setTimeout(() => {
+      undoTimer.current = null;
+      setUndoSnapshot(null);
+    }, UNDO_MS);
+  }
 
   async function refreshMe() {
     try {
@@ -48,10 +82,12 @@ export function AdventurePage({ token, onUser }: AdventurePageProps) {
 
   async function onChoose(choiceId: number) {
     if (!summary || busy) return;
+    clearUndo();
     setBusy(true);
     setError('');
     try {
       const next = await api.adventureChoice(token, summary.id, choiceId);
+      choicePathRef.current = [...choicePathRef.current, choiceId];
       setScene(next);
       if (next.isEnding) await refreshMe();
     } catch (err) {
@@ -63,16 +99,18 @@ export function AdventurePage({ token, onUser }: AdventurePageProps) {
 
   async function onRestart() {
     if (!summary || busy) return;
-    if (scene && !scene.isEnding) {
-      const ok = window.confirm(
-        'Restart this quest from the beginning? Your current progress will be cleared.',
-      );
-      if (!ok) return;
-    }
+    const previous =
+      scene && !scene.isEnding
+        ? { scene, choiceIds: [...choicePathRef.current] }
+        : null;
     setBusy(true);
     setError('');
     try {
-      setScene(await api.adventureRestart(token, summary.id));
+      const next = await api.adventureRestart(token, summary.id);
+      choicePathRef.current = [];
+      setScene(next);
+      if (previous) armUndo(previous);
+      else clearUndo();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Restart failed');
     } finally {
@@ -80,12 +118,34 @@ export function AdventurePage({ token, onUser }: AdventurePageProps) {
     }
   }
 
+  async function onUndo() {
+    if (!undoSnapshot || !summary || busy) return;
+    const snapshot = undoSnapshot;
+    clearUndo();
+    setBusy(true);
+    setError('');
+    try {
+      // Server is at start after restart; replay choices to restore progress.
+      let next = await api.adventureRestart(token, summary.id);
+      const path: number[] = [];
+      for (const choiceId of snapshot.choiceIds) {
+        next = await api.adventureChoice(token, summary.id, choiceId);
+        path.push(choiceId);
+      }
+      choicePathRef.current = path;
+      setScene(next);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Undo failed');
+      setScene(snapshot.scene);
+      choicePathRef.current = [...snapshot.choiceIds];
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="adventure-shell stack shell-page">
-      <div className="row" style={{ justifyContent: 'space-between' }}>
-        <p className="muted" style={{ margin: 0 }}>
-          QA judgment quest
-        </p>
+      <div className="row" style={{ justifyContent: 'flex-end' }}>
         {summary ? (
           <button
             type="button"
@@ -97,6 +157,20 @@ export function AdventurePage({ token, onUser }: AdventurePageProps) {
           </button>
         ) : null}
       </div>
+
+      {undoSnapshot ? (
+        <p className="muted" role="status">
+          Restarted.{' '}
+          <button
+            type="button"
+            className="text-link"
+            onClick={() => void onUndo()}
+            disabled={busy}
+          >
+            Undo
+          </button>
+        </p>
+      ) : null}
 
       {summary ? (
         <header className="adventure-header stack-sm">

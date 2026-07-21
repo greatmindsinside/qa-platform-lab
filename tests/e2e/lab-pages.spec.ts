@@ -29,7 +29,6 @@ test('leaderboard settings and support pages @smoke @progression', async ({
     .getByRole('link', { name: 'Support' })
     .click();
   await expect(page.getByRole('heading', { name: 'Support' })).toBeVisible();
-  await page.getByText('How do I earn XP?').click();
   await page.getByLabel('Subject').fill('Practice feedback');
   await page.getByLabel('Message').fill('Thanks for the Quest Deck lab demo.');
   await page.getByRole('button', { name: 'Send message' }).click();

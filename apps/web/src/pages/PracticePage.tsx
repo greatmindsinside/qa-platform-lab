@@ -149,11 +149,6 @@ export function PracticePage({ token, onUser }: PracticePageProps) {
               flipped={flipped}
               onFlip={() => setFlipped((v) => !v)}
             />
-            <p className="muted practice-rate-hint">
-              {flipped
-                ? 'How confident do you feel?'
-                : 'Reveal the hint before rating'}
-            </p>
             <div className="row">
               <button
                 type="button"

@@ -49,9 +49,6 @@ export function SettingsPage({
     <div className="stack shell-page">
       <header className="stack-sm">
         <h1 className="page-title">Settings</h1>
-        <p className="muted" style={{ margin: 0 }}>
-          Update how you appear on Home and the leaderboard.
-        </p>
       </header>
 
       <section className="panel stack">
@@ -97,9 +94,6 @@ export function SettingsPage({
         <h2 className="section-title" style={{ margin: 0 }}>
           Session
         </h2>
-        <p className="muted" style={{ margin: 0 }}>
-          Sign out clears this browser’s demo session token.
-        </p>
         <button type="button" className="secondary" onClick={onSignOut}>
           Sign out
         </button>

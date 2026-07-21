@@ -48,7 +48,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     <div className="app-shell">
       <div className="login-panel panel stack">
         <p className="brand hero-brand">Quest Deck</p>
-        <p className="muted">Interview prep with light RPG progression.</p>
         <form className="stack" onSubmit={submit}>
           <label>
             Email

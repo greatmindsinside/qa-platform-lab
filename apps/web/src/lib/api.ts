@@ -215,7 +215,7 @@ export const api = {
       `${API_BASE}/api/adventures/${adventureId}/restart`,
       {
         method: 'POST',
-        headers: authHeaders(token),
+        headers: authHeaders(token, false),
       },
     );
     return parse<AdventureSceneView>(res);
