@@ -102,6 +102,7 @@ export function DecksPage({ token }: DecksPageProps) {
     () => pickContinueLearningDeck(decks),
     [decks],
   );
+  const continueCta = continueDeck ? deckPrimaryCta(continueDeck) : null;
   const pathDecks = useMemo(
     () => filterDecksByTab(decks, filter === 'yours' ? 'all' : filter),
     [decks, filter],
@@ -170,7 +171,7 @@ export function DecksPage({ token }: DecksPageProps) {
         </p>
       ) : null}
 
-      {!loading && continueDeck ? (
+      {!loading && continueDeck && continueCta ? (
         <section className="continue-learning" aria-labelledby="continue-heading">
           <h2 id="continue-heading" className="section-title continue-label">
             Continue Learning
@@ -207,11 +208,8 @@ export function DecksPage({ token }: DecksPageProps) {
                 </p>
               </div>
             </div>
-            <Link
-              className="practice-deck-cta"
-              to={deckPrimaryCta(continueDeck).to}
-            >
-              {deckPrimaryCta(continueDeck).label}
+            <Link className="practice-deck-cta" to={continueCta.to}>
+              {continueCta.label}
             </Link>
           </div>
         </section>
@@ -221,15 +219,14 @@ export function DecksPage({ token }: DecksPageProps) {
         <>
           <div
             className="deck-filter-tabs"
-            role="tablist"
+            role="toolbar"
             aria-label="Filter decks"
           >
             {FILTER_TABS.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
-                role="tab"
-                aria-selected={filter === tab.id}
+                aria-pressed={filter === tab.id}
                 className={
                   filter === tab.id ? 'deck-filter-tab is-active' : 'deck-filter-tab'
                 }

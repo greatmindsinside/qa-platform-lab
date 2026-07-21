@@ -5,7 +5,7 @@
 import { CURRICULUM_DECKS, SEED_USERS } from '@lab/shared';
 import { expect, test } from '../fixtures';
 
-test('learning path shows stages and Start here @smoke @progression', async ({
+test('learning path shows stage filters and Continue Learning @smoke @progression', async ({
   page,
 }) => {
   await page.goto('/login');
@@ -15,12 +15,12 @@ test('learning path shows stages and Start here @smoke @progression', async ({
 
   await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Decks' }).click();
   await expect(page.getByRole('heading', { name: 'Continue Learning' })).toBeVisible();
-  await expect(page.getByRole('tab', { name: 'Beginner' })).toBeVisible();
-  await expect(page.getByRole('tab', { name: 'Intermediate' })).toBeVisible();
-  await expect(page.getByRole('tab', { name: 'Expert' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Beginner' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Intermediate' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Expert' })).toBeVisible();
   await expect(page.locator('.start-here-badge')).toHaveCount(0);
 
-  await page.getByRole('tab', { name: 'Expert' }).click();
+  await page.getByRole('button', { name: 'Expert' }).click();
   await page
     .getByRole('listitem')
     .filter({ hasText: CURRICULUM_DECKS.strategy })

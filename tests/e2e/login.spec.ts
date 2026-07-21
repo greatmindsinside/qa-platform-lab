@@ -27,8 +27,8 @@ test('login page @smoke @auth', async ({ page, loginAs }) => {
     .getByRole('link', { name: 'Decks' })
     .click();
   await expect(page.getByRole('heading', { name: 'Decks', exact: true })).toBeVisible();
-  await expect(page.getByRole('tab', { name: 'All Decks' })).toBeVisible();
-  await expect(page.getByRole('tab', { name: 'Beginner' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'All Decks' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Beginner' })).toBeVisible();
   await expect(
     page.getByRole('link', { name: CURRICULUM_DECKS.foundations, exact: true }).first(),
   ).toBeVisible();
