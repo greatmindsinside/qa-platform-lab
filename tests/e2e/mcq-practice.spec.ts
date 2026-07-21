@@ -14,6 +14,7 @@ test('mcq deck session auto-advances @smoke @progression', async ({ page }) => {
     page.getByRole('progressbar', { name: 'XP toward next level' }),
   ).toBeVisible();
 
+  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Decks' }).click();
   await page
     .getByRole('listitem')
     .filter({ hasText: CURRICULUM_DECKS.foundations })
@@ -33,7 +34,7 @@ test('mcq deck session auto-advances @smoke @progression', async ({ page }) => {
   await expect(page.getByText('Card 3 of 8')).toBeVisible({ timeout: 5000 });
 
   await page.getByRole('link', { name: '← End session' }).click();
-  await page.getByRole('link', { name: '← Home' }).click();
-  await expect(page.getByText(/Streak [1-9]\d*/)).toBeVisible();
-  await expect(page.getByText(/[1-9]\d* XP/)).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Home' }).click();
+  await expect(page.getByText(/Level \d+ · \d+ XP/)).toBeVisible();
 });

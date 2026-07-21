@@ -1,8 +1,8 @@
 /**
- * @fileoverview Deck detail: play hero + collapsible manage.
+ * @fileoverview Deck detail — RPG dashboard layout (Active Quest + contents + rail).
  *
- * **What:** Primary Practice entry; cards/members/admin tucked under Manage.
- * **Why:** Prep sessions should not compete with invite/delete on the same screen.
+ * **What:** Mockup-aligned deck hub with practice CTA, card grid, invite/delete.
+ * **Why:** Employer-facing visual polish while keeping real prep/RBAC flows.
  */
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
@@ -25,10 +25,43 @@ export type DeckDetailPageProps = {
 
 const EMPTY_OPTIONS: [string, string, string, string] = ['', '', '', ''];
 
+const STUDY_TIPS = [
+  { t: 'Tip', text: 'Practice sessions award XP when you rate open cards or grade MCQs.' },
+  { t: 'Tip', text: 'Deck mastery rises as you mark cards solid or mastered.' },
+  { t: 'Tip', text: 'Invite a collaborator if you want a mentor on this deck.' },
+] as const;
+
+function MasteryRing({ percent }: { percent: number }) {
+  const p = Math.max(0, Math.min(100, percent));
+  const style = {
+    background: `conic-gradient(var(--shell-mastery) ${p * 3.6}deg, rgba(255,255,255,0.08) 0)`,
+  };
+  return (
+    <div
+      className="mastery-ring"
+      style={style}
+      role="progressbar"
+      aria-valuenow={p}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label="Deck mastery"
+    >
+      <div className="mastery-ring-inner">
+        <strong>{p}%</strong>
+        <span>MASTERY</span>
+      </div>
+    </div>
+  );
+}
+
 /**
- * Deck play hero + optional manage panel for cards and collaboration.
+ * Deck hub: Active Quest hero, contents grid, practice + management rail.
  */
-export function DeckDetailPage({ token, user, onUser }: DeckDetailPageProps) {
+export function DeckDetailPage({
+  token,
+  user,
+  onUser,
+}: DeckDetailPageProps) {
   const { id } = useParams();
   const deckId = Number(id);
   const navigate = useNavigate();
@@ -45,17 +78,35 @@ export function DeckDetailPage({ token, user, onUser }: DeckDetailPageProps) {
   const [correctIndex, setCorrectIndex] = useState(0);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [cardQuery, setCardQuery] = useState('');
+  const [loadState, setLoadState] = useState<'loading' | 'ready' | 'missing'>(
+    'loading',
+  );
 
   const reload = useCallback(async () => {
+    setLoadState('loading');
     const decks = await api.decks(token);
-    setDeck(decks.find((d) => d.id === deckId) ?? null);
+    const found = decks.find((d) => d.id === deckId) ?? null;
+    if (!found) {
+      setDeck(null);
+      setCards([]);
+      setMembers([]);
+      setLoadState('missing');
+      return;
+    }
+    setDeck(found);
     setCards(await api.cards(token, deckId));
     setMembers(await api.members(token, deckId));
     onUser(await api.me(token));
+    setLoadState('ready');
   }, [token, deckId, onUser]);
 
   useEffect(() => {
-    void reload().catch((e: Error) => setError(e.message));
+    void reload().catch((e: Error) => {
+      setError(e.message);
+      setLoadState('missing');
+    });
   }, [reload]);
 
   const isDeckAdmin =
@@ -103,193 +154,327 @@ export function DeckDetailPage({ token, user, onUser }: DeckDetailPageProps) {
   }
 
   async function removeDeck() {
+    const name = deck?.name ?? 'this deck';
+    const ok = window.confirm(
+      `Delete “${name}”? This permanently removes the deck and its cards. This cannot be undone.`,
+    );
+    if (!ok) return;
     setError('');
     try {
       await api.deleteDeck(token, deckId);
       navigate('/');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Delete failed');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Could not delete the deck. Try again or refresh the page.',
+      );
     }
   }
 
-  if (!deck) {
+  if (loadState === 'loading' || !deck) {
     return (
-      <div className="app-shell practice-loading">
-        <p className="muted">Loading deck…</p>
-        {error ? <p className="error">{error}</p> : null}
+      <div className="practice-loading stack">
+        {loadState === 'missing' ? (
+          <>
+            <p className="error">{error || 'Deck not found'}</p>
+            <Link to="/">← Home</Link>
+          </>
+        ) : (
+          <p className="muted">Loading deck…</p>
+        )}
       </div>
     );
   }
 
+  const mastery = deck.masteryPercent ?? 0;
+  const filtered = cards.filter((c) =>
+    cardQuery.trim()
+      ? c.prompt.toLowerCase().includes(cardQuery.trim().toLowerCase())
+      : true,
+  );
+  const stageLabel = deck.stage
+    ? deck.stage.charAt(0).toUpperCase() + deck.stage.slice(1)
+    : 'Custom';
+
   return (
-    <div className="app-shell stack">
-      <Link to="/">← Home</Link>
-      <div className="panel stack deck-play-hero">
-        <h1 className="brand">{deck.name}</h1>
-        <p className="muted">{deck.description}</p>
-        <div className="deck-mastery-row">
-          <span>Mastery {deck.masteryPercent ?? 0}%</span>
-          <div
-            className="session-progress"
-            role="progressbar"
-            aria-valuenow={deck.masteryPercent ?? 0}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label="Deck mastery"
-          >
-            <span style={{ width: `${deck.masteryPercent ?? 0}%` }} />
-          </div>
+    <div className="deck-dashboard">
+      <div className="deck-dashboard-main stack">
+          <section className="active-quest panel">
+            <div className="active-quest-body">
+              <div className="active-quest-meta">
+                <span className="active-quest-badge">Active Quest</span>
+                <span className="muted">
+                  {deck.recommendedStart
+                    ? 'Recommended start'
+                    : `${stageLabel} path`}
+                </span>
+              </div>
+              <h1 className="active-quest-title">{deck.name}</h1>
+              <p className="active-quest-desc">
+                {deck.description ||
+                  'Practice this deck to build mastery and earn XP.'}
+              </p>
+            </div>
+            <MasteryRing percent={mastery} />
+          </section>
+
+          <section className="deck-contents stack-sm">
+            <div className="deck-contents-head row">
+              <h2 className="section-title" style={{ margin: 0 }}>
+                Deck Contents (
+                  {cardQuery.trim()
+                    ? `${filtered.length} of ${cards.length}`
+                    : cards.length}{' '}
+                  Cards)
+              </h2>
+              <label className="deck-search">
+                <span className="visually-hidden">Search cards</span>
+                <input
+                  type="search"
+                  placeholder="Search…"
+                  value={cardQuery}
+                  onChange={(e) => setCardQuery(e.target.value)}
+                  aria-label="Search cards"
+                />
+              </label>
+            </div>
+
+            {filtered.length === 0 ? (
+              <p className="muted">
+                {cards.length === 0
+                  ? 'No cards yet — add some under Deck Management.'
+                  : 'No cards match your search.'}
+              </p>
+            ) : (
+              <ul className="quest-card-grid">
+                {filtered.map((c) => (
+                  <li key={c.id}>
+                    <Link
+                      to={`/practice/${c.id}`}
+                      className={`quest-card quest-card-${c.kind}`}
+                    >
+                      <div className="quest-card-top">
+                        <span className={`deck-badge deck-badge-${c.kind}`}>
+                          {c.kind === 'mcq' ? 'MCQ' : 'OPEN'}
+                        </span>
+                        <span className="quest-card-dots" aria-hidden>
+                          ···
+                        </span>
+                      </div>
+                      <strong className="quest-card-title">
+                        {c.prompt.length > 72
+                          ? `${c.prompt.slice(0, 72)}…`
+                          : c.prompt}
+                      </strong>
+                      <p className="quest-card-snip muted">
+                        {c.kind === 'mcq'
+                          ? 'Multiple choice — pick A–D and get instant feedback.'
+                          : 'Open response — flip for hint, then rate confidence.'}
+                      </p>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {error ? (
+            <p className="error" role="alert">
+              {error}
+            </p>
+          ) : null}
+          {message ? <p className="muted">{message}</p> : null}
         </div>
-        {cards.length > 0 ? (
-          <>
-            <p className="practice-guide">
-              {cards.length} cards · flip or pick A–D · auto-advance after each answer
-            </p>
-            <Link className="practice-deck-cta practice-deck-cta-lg" to={`/decks/${deckId}/play`}>
-              Practice deck
+
+        <aside className="deck-rail stack">
+          <div className="rail-card rail-rank">
+            <div className="rail-rank-art" aria-hidden>
+              {user.displayName.trim().charAt(0).toUpperCase() || 'Q'}
+            </div>
+            <div>
+              <p className="rail-rank-name">{user.title}</p>
+              <p className="muted rail-rank-sub">
+                Level {user.level} · {user.xpIntoLevel}/100 to next
+              </p>
+            </div>
+          </div>
+
+          {cards.length > 0 ? (
+            <Link
+              className="start-practice-cta"
+              to={`/decks/${deckId}/play`}
+            >
+              <span className="start-practice-icon" aria-hidden>
+                ⚔
+              </span>
+              <span className="start-practice-copy">
+                <strong>Start Practice</strong>
+                <small>Full deck session</small>
+              </span>
             </Link>
-          </>
-        ) : (
-          <p className="muted">No cards yet — add some under Manage deck below.</p>
-        )}
-      </div>
+          ) : (
+            <p className="muted rail-card">Add cards to enable practice.</p>
+          )}
 
-      {error ? <p className="error">{error}</p> : null}
-      {message ? <p className="muted">{message}</p> : null}
-
-      <details className="panel admin-details">
-        <summary>Manage deck</summary>
-        <div className="stack">
-          <div className="stack">
-            <h2 className="section-title">Cards</h2>
-            <p className="muted" style={{ margin: 0 }}>
-              Open a single card for one-off review.
-            </p>
-            <ul className="deck-list">
-              {cards.map((c) => (
-                <li key={c.id}>
-                  <Link to={`/practice/${c.id}`}>
-                    <span className={`deck-badge deck-badge-${c.kind}`}>
-                      {c.kind === 'mcq' ? 'MCQ' : 'Open'}
-                    </span>
-                    {c.prompt}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+          <div className="rail-card stack-sm">
+            <h3 className="rail-heading">Deck Management</h3>
             {isDeckAdmin ? (
-              <form className="stack" onSubmit={addCard}>
-                <label>
-                  Kind
-                  <select
-                    aria-label="Card kind"
-                    value={kind}
-                    onChange={(e) => setKind(e.target.value as CardKind)}
+              <>
+                <button
+                  type="button"
+                  className="rail-action"
+                  aria-expanded={inviteOpen}
+                  aria-controls="invite-panel"
+                  onClick={() => setInviteOpen((v) => !v)}
+                >
+                  <span>Invite Collaborators</span>
+                  <span aria-hidden>›</span>
+                </button>
+                {inviteOpen ? (
+                  <form
+                    id="invite-panel"
+                    className="stack-sm invite-inline"
+                    onSubmit={invite}
                   >
-                    <option value="open">open</option>
-                    <option value="mcq">mcq</option>
-                  </select>
-                </label>
-                <label>
-                  Prompt
-                  <textarea
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    rows={2}
-                  />
-                </label>
-                {kind === 'open' ? (
-                  <label>
-                    Answer hint
-                    <textarea
-                      value={answerHint}
-                      onChange={(e) => setAnswerHint(e.target.value)}
-                      rows={2}
-                    />
-                  </label>
-                ) : (
-                  <>
-                    {(['A', 'B', 'C', 'D'] as const).map((label, index) => (
-                      <label key={label}>
-                        Option {label}
-                        <input
-                          value={options[index]}
-                          onChange={(e) => {
-                            const next = [...options] as [
-                              string,
-                              string,
-                              string,
-                              string,
-                            ];
-                            next[index] = e.target.value;
-                            setOptions(next);
-                          }}
-                        />
-                      </label>
-                    ))}
                     <label>
-                      Correct option
+                      Email
+                      <input
+                        type="email"
+                        required
+                        autoComplete="email"
+                        value={inviteEmail}
+                        onChange={(e) => setInviteEmail(e.target.value)}
+                      />
+                    </label>
+                    <label>
+                      Role
                       <select
-                        aria-label="Correct option"
-                        value={correctIndex}
-                        onChange={(e) => setCorrectIndex(Number(e.target.value))}
+                        aria-label="Invite role"
+                        value={inviteRole}
+                        onChange={(e) =>
+                          setInviteRole(e.target.value as Role)
+                        }
                       >
-                        <option value={0}>A</option>
-                        <option value={1}>B</option>
-                        <option value={2}>C</option>
-                        <option value={3}>D</option>
+                        <option value="member">member</option>
+                        <option value="admin">admin</option>
                       </select>
                     </label>
-                  </>
-                )}
-                <button type="submit">Add card</button>
-              </form>
-            ) : null}
-          </div>
-
-          <div className="stack">
-            <h2 className="section-title">Members</h2>
-            <ul>
+                    <button type="submit">Send invite</button>
+                  </form>
+                ) : null}
+                <button
+                  type="button"
+                  className="rail-action rail-action-danger"
+                  onClick={() => void removeDeck()}
+                >
+                  <span>Delete Deck</span>
+                  <span aria-hidden>›</span>
+                </button>
+                <details className="admin-details add-card-details">
+                  <summary>Add card</summary>
+                  <form className="stack" onSubmit={addCard}>
+                    <label>
+                      Kind
+                      <select
+                        aria-label="Card kind"
+                        value={kind}
+                        onChange={(e) => setKind(e.target.value as CardKind)}
+                      >
+                        <option value="open">open</option>
+                        <option value="mcq">mcq</option>
+                      </select>
+                    </label>
+                    <label>
+                      Prompt
+                      <textarea
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        rows={2}
+                        required
+                      />
+                    </label>
+                    {kind === 'open' ? (
+                      <label>
+                        Answer hint
+                        <textarea
+                          value={answerHint}
+                          onChange={(e) => setAnswerHint(e.target.value)}
+                          rows={2}
+                        />
+                      </label>
+                    ) : (
+                      <>
+                        {(['A', 'B', 'C', 'D'] as const).map((label, index) => (
+                          <label key={label}>
+                            Option {label}
+                            <input
+                              value={options[index]}
+                              onChange={(e) => {
+                                const next = [...options] as [
+                                  string,
+                                  string,
+                                  string,
+                                  string,
+                                ];
+                                next[index] = e.target.value;
+                                setOptions(next);
+                              }}
+                            />
+                          </label>
+                        ))}
+                        <label>
+                          Correct option
+                          <select
+                            aria-label="Correct option"
+                            value={correctIndex}
+                            onChange={(e) =>
+                              setCorrectIndex(Number(e.target.value))
+                            }
+                          >
+                            <option value={0}>A</option>
+                            <option value={1}>B</option>
+                            <option value={2}>C</option>
+                            <option value={3}>D</option>
+                          </select>
+                        </label>
+                      </>
+                    )}
+                    <button type="submit">Add card</button>
+                  </form>
+                </details>
+              </>
+            ) : (
+              <p className="muted" style={{ margin: 0 }}>
+                Member access — practice only.
+              </p>
+            )}
+            <ul className="rail-members muted">
               {members.map((m) => (
                 <li key={m.userId}>
                   {m.email} ({m.role})
                 </li>
               ))}
             </ul>
-            {isDeckAdmin ? (
-              <form className="row" onSubmit={invite}>
-                <label style={{ flex: 1 }}>
-                  Invite
-                  <input
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                  />
-                </label>
-                <label>
-                  Role
-                  <select
-                    aria-label="Invite role"
-                    value={inviteRole}
-                    onChange={(e) => setInviteRole(e.target.value as Role)}
-                  >
-                    <option value="member">member</option>
-                    <option value="admin">admin</option>
-                  </select>
-                </label>
-                <button type="submit" style={{ alignSelf: 'end' }}>
-                  Invite
-                </button>
-              </form>
-            ) : null}
           </div>
 
-          {isDeckAdmin ? (
-            <button type="button" className="danger" onClick={removeDeck}>
-              Delete deck
-            </button>
-          ) : null}
-        </div>
-      </details>
-    </div>
+          <div className="rail-card combat-log">
+            <h3 className="rail-heading combat-log-title">
+              <span className="combat-dot" aria-hidden />
+              Study tips
+            </h3>
+            <p className="muted" style={{ margin: 0, fontSize: '0.82rem' }}>
+              Guidance for this hub — not a live activity feed.
+            </p>
+            <ul className="combat-log-list">
+              {STUDY_TIPS.map((row) => (
+                <li key={row.text}>
+                  <span className="combat-time">[{row.t}]</span> {row.text}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </aside>
+      </div>
   );
 }

@@ -25,12 +25,16 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
 
-  async function submit(e: FormEvent) {
+  async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
     setError('');
+    // Prefer FormData so autofill / automation that skips React onChange still works.
+    const fd = new FormData(e.currentTarget);
+    const nextEmail = String(fd.get('email') ?? email).trim();
+    const nextPassword = String(fd.get('password') ?? password);
     try {
-      const res = await api.login(email, password);
+      const res = await api.login(nextEmail, nextPassword);
       onLogin(res.token, res.user);
       navigate('/');
     } catch (err) {
@@ -52,6 +56,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               name="email"
               type="email"
               autoComplete="username"
+              required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -62,11 +67,16 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               name="password"
               type="password"
               autoComplete="current-password"
+              required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </label>
-          {error ? <p className="error">{error}</p> : null}
+          {error ? (
+            <p className="error" role="alert">
+              {error}
+            </p>
+          ) : null}
           <button type="submit" disabled={busy}>
             Sign in
           </button>

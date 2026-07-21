@@ -95,4 +95,16 @@ export class ApiClient {
   deleteDeck(deckId: number) {
     return this.request('DELETE', `/api/decks/${deckId}`);
   }
+
+  leaderboard() {
+    return this.request('GET', '/api/leaderboard');
+  }
+
+  updateProfile(displayName: string) {
+    return this.request('PATCH', '/api/me', { displayName });
+  }
+
+  submitSupport(subject: string, message: string) {
+    return this.request('POST', '/api/support', { subject, message });
+  }
 }

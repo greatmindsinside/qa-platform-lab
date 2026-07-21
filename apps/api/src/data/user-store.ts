@@ -81,4 +81,24 @@ export class UserStore {
     if (!user) throw new Error('User missing after update');
     return user;
   }
+
+  /** Ranked users for the demo leaderboard (XP desc, then id). */
+  listByXpDesc(limit = 50): UserRow[] {
+    return this.db
+      .prepare(
+        `SELECT * FROM users
+         ORDER BY total_xp DESC, id ASC
+         LIMIT ?`,
+      )
+      .all(limit) as UserRow[];
+  }
+
+  updateDisplayName(userId: number, displayName: string): UserRow {
+    this.db
+      .prepare(`UPDATE users SET display_name = ? WHERE id = ?`)
+      .run(displayName, userId);
+    const user = this.findById(userId);
+    if (!user) throw new Error('User missing after display name update');
+    return user;
+  }
 }

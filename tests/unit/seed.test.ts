@@ -107,4 +107,31 @@ describe('seed curriculum', () => {
       expect(names).not.toContain(legacy);
     }
   });
+
+  it('seeds Flaky Friday adventure with branch and endings', async () => {
+    const db = openMemoryDb();
+    await seedDatabase(db);
+    const { AdventureStore } = await import(
+      '../../apps/api/src/data/adventure-store.ts'
+    );
+    const store = new AdventureStore(db);
+    const adventure = store.findBySlug('flaky-friday');
+    expect(adventure).toBeTruthy();
+    const scenes = store.listScenes(adventure!.id);
+    expect(scenes.length).toBeGreaterThanOrEqual(8);
+    const endings = scenes.filter((s) => s.is_ending);
+    expect(endings.length).toBeGreaterThanOrEqual(2);
+    expect(endings.some((s) => s.ending_tone === 'strong')).toBe(true);
+    expect(endings.some((s) => s.ending_tone === 'weak')).toBe(true);
+
+    const choiceTags = new Set<string>();
+    for (const scene of scenes) {
+      for (const choice of store.listChoices(scene.id)) {
+        for (const tag of JSON.parse(choice.lesson_tags_json) as string[]) {
+          choiceTags.add(tag);
+        }
+      }
+    }
+    expect(choiceTags.size).toBeGreaterThanOrEqual(3);
+  });
 });

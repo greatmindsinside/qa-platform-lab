@@ -7,6 +7,7 @@
  */
 
 import type { FastifyInstance } from 'fastify';
+import type { AdventureService } from '../application/adventure-service.js';
 import type { AuthService } from '../application/auth-service.js';
 import type { DeckService } from '../application/deck-service.js';
 import type { PracticeService } from '../application/practice-service.js';
@@ -19,6 +20,7 @@ export function registerRoutes(
     auth: AuthService;
     decks: DeckService;
     practice: PracticeService;
+    adventures: AdventureService;
   },
 ): void {
   app.get('/api/health', async () => ({ ok: true }));
@@ -39,6 +41,41 @@ export function registerRoutes(
     '/api/me',
     { preHandler: requireAuth },
     async (request) => deps.auth.me(request.authUser!.id),
+  );
+
+  app.patch<{ Body: { displayName?: string } }>(
+    '/api/me',
+    { preHandler: requireAuth },
+    async (request) => {
+      const displayName = request.body?.displayName ?? '';
+      return deps.auth.updateProfile(request.authUser!.id, displayName);
+    },
+  );
+
+  app.get(
+    '/api/leaderboard',
+    { preHandler: requireAuth },
+    async () => deps.auth.leaderboard(),
+  );
+
+  app.post<{ Body: { subject?: string; message?: string } }>(
+    '/api/support',
+    { preHandler: requireAuth },
+    async (request) => {
+      const subject = request.body?.subject?.trim() ?? '';
+      const message = request.body?.message?.trim() ?? '';
+      if (subject.length < 3) {
+        throw new HttpError(400, 'Subject must be at least 3 characters');
+      }
+      if (message.length < 10) {
+        throw new HttpError(400, 'Message must be at least 10 characters');
+      }
+      if (subject.length > 120 || message.length > 2000) {
+        throw new HttpError(400, 'Subject or message is too long');
+      }
+      // Demo lab: accept the ticket without outbound email.
+      return { ok: true as const, ticketId: `lab-${Date.now()}` };
+    },
   );
 
   app.get(
@@ -170,5 +207,47 @@ export function registerRoutes(
         practiceBody,
       );
     },
+  );
+
+  app.get(
+    '/api/adventures',
+    { preHandler: requireAuth },
+    async (request) => deps.adventures.list(request.authUser!.id),
+  );
+
+  app.get<{ Params: { id: string } }>(
+    '/api/adventures/:id/scene',
+    { preHandler: requireAuth },
+    async (request) =>
+      deps.adventures.getScene(
+        request.authUser!.id,
+        Number(request.params.id),
+      ),
+  );
+
+  app.post<{ Params: { id: string }; Body: { choiceId?: number } }>(
+    '/api/adventures/:id/choices',
+    { preHandler: requireAuth },
+    async (request) => {
+      const choiceId = request.body?.choiceId;
+      if (choiceId === undefined || !Number.isInteger(choiceId)) {
+        throw new HttpError(400, 'choiceId required');
+      }
+      return deps.adventures.choose(
+        request.authUser!.id,
+        Number(request.params.id),
+        choiceId,
+      );
+    },
+  );
+
+  app.post<{ Params: { id: string } }>(
+    '/api/adventures/:id/restart',
+    { preHandler: requireAuth },
+    async (request) =>
+      deps.adventures.restart(
+        request.authUser!.id,
+        Number(request.params.id),
+      ),
   );
 }

@@ -6,9 +6,10 @@
  * UserStore). Progression display fields come from domain via mapper.
  */
 
-import type { PublicUser } from '@lab/shared';
+import type { LeaderboardEntry, PublicUser } from '@lab/shared';
 import type { UserStore } from '../data/user-store.js';
 import { toPublicUser } from '../data/mappers.js';
+import { levelFromXp, titleForLevel } from '../domain/progression.js';
 import { verifyPassword } from '../http/password.js';
 import { signToken } from '../http/token.js';
 import { HttpError } from '../http/http-error.js';
@@ -46,5 +47,38 @@ export class AuthService {
     const user = this.users.findById(userId);
     if (!user) throw new HttpError(401, 'Unauthorized');
     return toPublicUser(user);
+  }
+
+  /** Ranked XP board for the lab (no emails). */
+  leaderboard(): LeaderboardEntry[] {
+    return this.users.listByXpDesc().map((row, index) => {
+      const level = levelFromXp(row.total_xp);
+      return {
+        rank: index + 1,
+        userId: row.id,
+        displayName: row.display_name,
+        title: titleForLevel(level),
+        level,
+        totalXp: row.total_xp,
+        currentStreak: row.current_streak,
+      };
+    });
+  }
+
+  /**
+   * Update display name for the signed-in user.
+   * @throws {HttpError} 400 on empty/too long name; 401 if missing
+   */
+  updateProfile(userId: number, displayName: string): PublicUser {
+    const trimmed = displayName.trim();
+    if (trimmed.length < 2) {
+      throw new HttpError(400, 'Display name must be at least 2 characters');
+    }
+    if (trimmed.length > 40) {
+      throw new HttpError(400, 'Display name must be 40 characters or fewer');
+    }
+    const user = this.users.findById(userId);
+    if (!user) throw new HttpError(401, 'Unauthorized');
+    return toPublicUser(this.users.updateDisplayName(userId, trimmed));
   }
 }

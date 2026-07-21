@@ -1,5 +1,5 @@
 /**
- * @fileoverview E2E learning path Home sections (@smoke @progression).
+ * @fileoverview E2E learning path on Decks page (@smoke @progression).
  */
 
 import { CURRICULUM_DECKS, SEED_USERS } from '@lab/shared';
@@ -13,6 +13,7 @@ test('learning path shows stages and Start here @smoke @progression', async ({
   await page.getByLabel('Password').fill(SEED_USERS.member.password);
   await page.getByRole('button', { name: 'Sign in' }).click();
 
+  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Decks' }).click();
   await expect(page.getByRole('heading', { name: 'Beginner' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Intermediate' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Expert' })).toBeVisible();

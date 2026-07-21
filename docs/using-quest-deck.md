@@ -2,7 +2,7 @@
 
 Quest Deck is the **interview-prep product** in this lab: practice real QA/SDET and behavioral questions along a **Beginner → Intermediate → Expert** path, rate confidence, and earn light RPG progression (XP, levels, titles, streaks).
 
-> **Status:** Learning-path curriculum (`003`) shipped on top of MVP + MCQ. Commands below work after `yarn install` and shared package builds.
+> **Status:** Learning-path curriculum (`003`) plus **Adventure** (`005`) on top of MVP + MCQ. Commands below work after `yarn install` and shared package builds.
 
 ## Who this is for
 
@@ -21,7 +21,7 @@ yarn workspace @lab/shared build
 yarn dev
 ```
 
-Default URLs: API `http://127.0.0.1:3333`, web `http://127.0.0.1:5173` (Vite proxies `/api`).  
+Default URLs: API `http://127.0.0.1:3333`, web `http://127.0.0.1:5173` (Vite proxies `/api`; falls back if the port is busy).  
 Optional: `yarn dev:api` / `yarn dev:web` in separate terminals.  
 Fresh demo DB recommended after curriculum changes: delete `apps/api/data/*.db` or run the e2e reset script. Restarting the API also runs seed cleanup that **removes legacy pre-path demo decks** (e.g. “Playwright & E2E”) so they do not clutter Your decks.
 
@@ -33,6 +33,17 @@ Fresh demo DB recommended after curriculum changes: delete `apps/api/data/*.db` 
 | `member@lab.local` | `Member123!` | Deck **member** on all curriculum decks day one; can practice; cannot delete |
 
 These are **public demo secrets** for the portfolio lab—not production credentials.
+
+## Adventure (story mode)
+
+Home also shows **Adventure** — a short choice-driven story (**Flaky Friday**) that teaches QA judgment (flakes, severity, evidence). Separate from deck Practice.
+
+1. **Start adventure** → read the scene → tap a choice (no command parser).  
+2. Leave mid-run → **Continue** resumes the same scene.  
+3. Finish → see **What you practiced** takeaways → Home.  
+4. First completion awards **+25 XP** and counts as a practice day for streak; **replay** is allowed for learning but awards **+0 XP**.
+
+Design: [`specs/005-qa-adventure/`](../specs/005-qa-adventure/).
 
 ## Learning path (Beginner → Expert)
 

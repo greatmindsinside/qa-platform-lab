@@ -5,7 +5,9 @@
 
 **Quest Deck** is a gamified QA/SDET interview-prep app, owned end-to-end as a TypeScript quality proof (unit → API → E2E → cross-layer).
 
-![Quest Deck Home: Beginner Start here path](docs/assets/quest-deck-home.png)
+![Quest Deck Home: progress and Practice](docs/assets/quest-deck-home.png)
+
+![Quest Deck Decks: Beginner → Expert path](docs/assets/quest-deck-decks.png)
 
 > **Status:** App MVP is runnable locally and via Docker. PR CI runs lint, typecheck, unit, and `@smoke`; `main` runs the full Playwright suite and uploads the HTML report. Spec packages cover the product through learning path (`003`); memory tips (`004`) are specified and planned next.
 
@@ -58,7 +60,7 @@ Deeper matrix: [docs/quality-architecture.md](docs/quality-architecture.md) · [
 
 ## What Quest Deck is
 
-Practice interview cards in decks (open flip + MCQ), earn XP/levels/titles/streaks, and follow a soft Beginner → Intermediate → Expert path on Home. Deck admins invite members; delete uses membership role, not a global admin shortcut.
+Practice interview cards in decks (open flip + MCQ), earn XP/levels/titles/streaks, and follow a soft Beginner → Intermediate → Expert path under Decks. Home stays simple: progress and one Practice action. Deck admins invite members; delete uses membership role, not a global admin shortcut.
 
 Seeded demos: `admin@lab.local` / `Admin123!` and `member@lab.local` / `Member123!`.
 
@@ -82,7 +84,7 @@ yarn workspace @lab/shared build
 yarn dev
 ```
 
-Open `http://127.0.0.1:5173` (API on `3333`; Vite proxies `/api`).
+Open `http://127.0.0.1:5173` (API on `3333`; Vite proxies `/api`). If 5173 is busy, Vite picks the next free port.
 
 ### Docker (optional)
 

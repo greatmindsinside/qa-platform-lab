@@ -70,6 +70,45 @@ CREATE TABLE IF NOT EXISTS practice_events (
   selected_index INTEGER,
   was_correct INTEGER
 );
+
+CREATE TABLE IF NOT EXISTS adventures (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  slug TEXT NOT NULL UNIQUE,
+  title TEXT NOT NULL,
+  blurb TEXT NOT NULL,
+  start_scene_id INTEGER,
+  learning_themes_json TEXT NOT NULL DEFAULT '[]'
+);
+
+CREATE TABLE IF NOT EXISTS scenes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  adventure_id INTEGER NOT NULL REFERENCES adventures(id) ON DELETE CASCADE,
+  scene_key TEXT NOT NULL,
+  body TEXT NOT NULL,
+  is_ending INTEGER NOT NULL DEFAULT 0,
+  ending_tone TEXT CHECK (ending_tone IS NULL OR ending_tone IN ('strong', 'weak')),
+  UNIQUE (adventure_id, scene_key)
+);
+
+CREATE TABLE IF NOT EXISTS choices (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  scene_id INTEGER NOT NULL REFERENCES scenes(id) ON DELETE CASCADE,
+  label TEXT NOT NULL,
+  next_scene_id INTEGER NOT NULL REFERENCES scenes(id),
+  lesson_tags_json TEXT NOT NULL DEFAULT '[]',
+  sort_order INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS adventure_progress (
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  adventure_id INTEGER NOT NULL REFERENCES adventures(id) ON DELETE CASCADE,
+  status TEXT NOT NULL CHECK (status IN ('in_progress', 'completed')),
+  current_scene_id INTEGER NOT NULL REFERENCES scenes(id),
+  award_granted INTEGER NOT NULL DEFAULT 0,
+  chosen_choice_ids_json TEXT NOT NULL DEFAULT '[]',
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (user_id, adventure_id)
+);
 `;
 
 /** Add MCQ columns to older DBs created before 002; stage cols before 003. */

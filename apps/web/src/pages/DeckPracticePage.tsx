@@ -252,7 +252,7 @@ export function DeckPracticePage({ token, onUser }: DeckPracticePageProps) {
     }
 
     return (
-      <div className="app-shell stack">
+      <div className="stack shell-page">
         <div className="panel stack practice-panel session-complete">
           <p className="session-complete-label">Session complete</p>
           <h1 className="brand practice-title">{deckName}</h1>
@@ -279,10 +279,21 @@ export function DeckPracticePage({ token, onUser }: DeckPracticePageProps) {
 
   if (cards.length === 0) {
     return (
-      <div className="app-shell practice-loading">
-        <p className="muted">Loading session…</p>
-        {error ? <p className="error">{error}</p> : null}
-        <Link to={`/decks/${deckId}`}>← Deck</Link>
+      <div className="practice-loading stack shell-page">
+        {error ? (
+          <>
+            <p className="error" role="alert">
+              {error}
+            </p>
+            <Link to={`/decks/${deckId}`}>← Deck</Link>
+            <Link to="/">Home</Link>
+          </>
+        ) : (
+          <>
+            <p className="muted">Loading session…</p>
+            <Link to={`/decks/${deckId}`}>← Deck</Link>
+          </>
+        )}
       </div>
     );
   }
@@ -316,7 +327,7 @@ export function DeckPracticePage({ token, onUser }: DeckPracticePageProps) {
   }
 
   return (
-    <div className="app-shell stack">
+    <div className="stack shell-page">
       <div className="panel stack practice-panel">
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <Link className="practice-back" to={`/decks/${deckId}`}>
@@ -417,7 +428,11 @@ export function DeckPracticePage({ token, onUser }: DeckPracticePageProps) {
           </>
         )}
 
-        {error ? <p className="error">{error}</p> : null}
+        {error ? (
+          <p className="error" role="alert">
+            {error}
+          </p>
+        ) : null}
       </div>
     </div>
   );

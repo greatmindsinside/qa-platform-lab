@@ -53,6 +53,7 @@ export function PracticePage({ token, onUser }: PracticePageProps) {
   }, [token, cardId]);
 
   async function rate(confidence: string) {
+    if (!flipped) return;
     setError('');
     setBusy(true);
     try {
@@ -91,9 +92,21 @@ export function PracticePage({ token, onUser }: PracticePageProps) {
 
   if (!card) {
     return (
-      <div className="app-shell practice-loading">
-        <p className="muted">Loading…</p>
-        {error ? <p className="error">{error}</p> : null}
+      <div className="practice-loading shell-page stack">
+        {error ? (
+          <>
+            <p className="error" role="alert">
+              {error === 'Card not found'
+                ? 'That card was not found. It may have been removed from the deck.'
+                : error}
+            </p>
+            <Link to="/">← Home</Link>
+          </>
+        ) : (
+          <p className="muted" role="status">
+            Loading card…
+          </p>
+        )}
       </div>
     );
   }
@@ -101,7 +114,7 @@ export function PracticePage({ token, onUser }: PracticePageProps) {
   const isMcq = card.kind === 'mcq';
 
   return (
-    <div className="app-shell stack">
+    <div className="stack shell-page">
       <div className="panel stack practice-panel">
         <Link className="practice-back" to={`/decks/${card.deckId}`}>
           ← Deck
@@ -136,25 +149,29 @@ export function PracticePage({ token, onUser }: PracticePageProps) {
               flipped={flipped}
               onFlip={() => setFlipped((v) => !v)}
             />
-            <p className="muted practice-rate-hint">Rate your confidence</p>
+            <p className="muted practice-rate-hint">
+              {flipped
+                ? 'How confident do you feel?'
+                : 'Reveal the hint before rating'}
+            </p>
             <div className="row">
               <button
                 type="button"
-                disabled={busy}
+                disabled={busy || !flipped || Boolean(result)}
                 onClick={() => void rate('learning')}
               >
                 Learning
               </button>
               <button
                 type="button"
-                disabled={busy}
+                disabled={busy || !flipped || Boolean(result)}
                 onClick={() => void rate('solid')}
               >
                 Solid
               </button>
               <button
                 type="button"
-                disabled={busy}
+                disabled={busy || !flipped || Boolean(result)}
                 onClick={() => void rate('mastered')}
               >
                 Mastered

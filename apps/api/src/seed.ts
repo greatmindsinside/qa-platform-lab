@@ -12,6 +12,7 @@ import {
   type LearningStage,
 } from '@lab/shared';
 import type { LabDb } from './data/db.js';
+import { AdventureStore } from './data/adventure-store.js';
 import { DeckStore } from './data/deck-store.js';
 import { UserStore } from './data/user-store.js';
 import { hashPassword } from './http/password.js';
@@ -359,4 +360,139 @@ export async function seedDatabase(db: LabDb): Promise<void> {
   // Drop pre-003 demo decks so upgraded DBs don't pollute Your decks.
   removeLegacySeedDecks(decks);
   ensureCurriculum(decks, admin.id, member.id);
+  ensureFlakyFridayAdventure(new AdventureStore(db));
+}
+
+/**
+ * Seed the Flaky Friday choice graph once (idempotent by slug).
+ * Graph: intro → triage → investigate|rush → evidence|ship → endings.
+ */
+function ensureFlakyFridayAdventure(store: AdventureStore): void {
+  if (store.findBySlug('flaky-friday')) return;
+
+  const adventure = store.insertAdventure({
+    slug: 'flaky-friday',
+    title: 'Flaky Friday',
+    blurb:
+      'A release is wobbling. Investigate the flake, triage severity, and ship with evidence — or rush and learn the hard way.',
+    learningThemes: ['flake-risk', 'severity', 'evidence', 'happy-vs-edge'],
+  });
+
+  const scenes = {
+    intro: store.insertScene({
+      adventureId: adventure.id,
+      sceneKey: 'intro',
+      body: 'It is Friday afternoon. CI is red on main — but only sometimes. Product wants the build out before the weekend. You are the QA on call.',
+    }),
+    triage: store.insertScene({
+      adventureId: adventure.id,
+      sceneKey: 'triage',
+      body: 'The failing job is an E2E that clicks “Save” then asserts a toast. It passed locally. Logs show a 2s spinner that sometimes lasts longer. Leadership asks: “Is this a blocker?”',
+    }),
+    investigate: store.insertScene({
+      adventureId: adventure.id,
+      sceneKey: 'investigate',
+      body: 'You treat it as a flake risk, not a product random. You capture the run URL, note the wait strategy, and reproduce with a slower network profile. The toast appears after the spinner — when you wait for the right signal, it is green.',
+    }),
+    rush: store.insertScene({
+      adventureId: adventure.id,
+      sceneKey: 'rush',
+      body: 'You relaunch CI twice. It goes green. Someone says “ship it.” You skip deeper investigation to protect the Friday release window.',
+    }),
+    evidence: store.insertScene({
+      adventureId: adventure.id,
+      sceneKey: 'evidence',
+      body: 'Time to communicate. Do you file a solid bug with steps and evidence, or a thin “CI flaky, ignore” note?',
+    }),
+    ship: store.insertScene({
+      adventureId: adventure.id,
+      sceneKey: 'ship',
+      body: 'The build is tagged. Support chat lights up Monday: intermittent save failures for users on slow networks. Leadership asks what you knew on Friday.',
+    }),
+    endingStrong: store.insertScene({
+      adventureId: adventure.id,
+      sceneKey: 'ending-strong',
+      body: 'You held the line: flake diagnosis, severity vs priority clarity, and a bug report with evidence. The release slipped a few hours — and Monday was quiet.',
+      isEnding: true,
+      endingTone: 'strong',
+    }),
+    endingWeak: store.insertScene({
+      adventureId: adventure.id,
+      sceneKey: 'ending-weak',
+      body: 'The weekend ship looked fine until production matched the flake. Without evidence and edge-case coverage, triage turned into firefighting.',
+      isEnding: true,
+      endingTone: 'weak',
+    }),
+    edgeCheck: store.insertScene({
+      adventureId: adventure.id,
+      sceneKey: 'edge-check',
+      body: 'Before you close the loop: do you add a wait-for-toast assertion (happy path only) or also cover a slow-network / retry edge?',
+    }),
+  };
+
+  store.setStartScene(adventure.id, scenes.intro.id);
+
+  store.insertChoice({
+    sceneId: scenes.intro.id,
+    label: 'Open the failing CI run',
+    nextSceneId: scenes.triage.id,
+    lessonTags: ['evidence'],
+    sortOrder: 0,
+  });
+  store.insertChoice({
+    sceneId: scenes.triage.id,
+    label: 'Investigate waits and signals before calling severity',
+    nextSceneId: scenes.investigate.id,
+    lessonTags: ['flake-risk', 'severity'],
+    sortOrder: 0,
+  });
+  store.insertChoice({
+    sceneId: scenes.triage.id,
+    label: 'Rerun until green and protect the Friday ship',
+    nextSceneId: scenes.rush.id,
+    lessonTags: ['flake-risk'],
+    sortOrder: 1,
+  });
+  store.insertChoice({
+    sceneId: scenes.investigate.id,
+    label: 'File a bug with steps, expected/actual, and the run link',
+    nextSceneId: scenes.evidence.id,
+    lessonTags: ['evidence'],
+    sortOrder: 0,
+  });
+  store.insertChoice({
+    sceneId: scenes.rush.id,
+    label: 'Approve the tag and go dark for the weekend',
+    nextSceneId: scenes.ship.id,
+    lessonTags: ['severity'],
+    sortOrder: 0,
+  });
+  store.insertChoice({
+    sceneId: scenes.evidence.id,
+    label: 'Also add an edge-case check for slow networks',
+    nextSceneId: scenes.edgeCheck.id,
+    lessonTags: ['happy-vs-edge'],
+    sortOrder: 0,
+  });
+  store.insertChoice({
+    sceneId: scenes.evidence.id,
+    label: 'Ship after the flake is explained in the ticket',
+    nextSceneId: scenes.endingStrong.id,
+    lessonTags: ['evidence', 'severity'],
+    sortOrder: 1,
+  });
+  store.insertChoice({
+    sceneId: scenes.edgeCheck.id,
+    label: 'Land the stronger coverage and delay the tag',
+    nextSceneId: scenes.endingStrong.id,
+    lessonTags: ['happy-vs-edge', 'evidence'],
+    sortOrder: 0,
+  });
+  store.insertChoice({
+    sceneId: scenes.ship.id,
+    label: 'Accept Monday firefighting as the cost of speed',
+    nextSceneId: scenes.endingWeak.id,
+    lessonTags: ['flake-risk', 'severity'],
+    sortOrder: 0,
+  });
 }

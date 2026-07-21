@@ -1,5 +1,5 @@
 /**
- * @fileoverview E2E login + staged curriculum + bad password (@smoke @auth).
+ * @fileoverview E2E login + simplified home + curriculum via Decks (@smoke @auth).
  */
 
 import { CURRICULUM_DECKS, SEED_USERS } from '@lab/shared';
@@ -15,7 +15,18 @@ test('login page @smoke @auth', async ({ page, loginAs }) => {
   await expect(page.getByText(/Invalid email or password/i)).toBeVisible();
 
   await loginAs('member');
-  await expect(page.getByText(/Streak/)).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: SEED_USERS.member.displayName }),
+  ).toBeVisible();
+  await expect(page.getByText(/Level \d+ · \d+ XP/)).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Practice' })).toBeVisible();
+  await expect(page.getByText(CURRICULUM_DECKS.foundations)).toBeVisible();
+
+  await page
+    .getByRole('navigation', { name: 'Main' })
+    .getByRole('link', { name: 'Decks' })
+    .click();
+  await expect(page.getByRole('heading', { name: 'Decks', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Beginner' })).toBeVisible();
   await expect(page.getByText(CURRICULUM_DECKS.foundations)).toBeVisible();
   await expect(page.getByText(CURRICULUM_DECKS.applied)).toBeVisible();

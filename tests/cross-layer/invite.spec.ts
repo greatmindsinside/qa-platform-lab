@@ -29,6 +29,7 @@ test('invite then member sees deck @smoke @mutation', async ({
   await page.getByLabel('Email').fill(SEED_USERS.member.email);
   await page.getByLabel('Password').fill(SEED_USERS.member.password);
   await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Decks' }).click();
   await expect(
     page.getByRole('listitem').filter({ hasText: deckName }),
   ).toBeVisible();

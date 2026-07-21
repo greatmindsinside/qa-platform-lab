@@ -40,7 +40,7 @@ export function FlipCard({
           >
             <span className="flip-face-label">Question</span>
             <p className="flip-face-body">{prompt}</p>
-            <span className="flip-face-cue">Tap to flip</span>
+            <span className="flip-face-cue">Click or press Enter to flip</span>
           </div>
           <div
             className="flip-face flip-back"
@@ -50,7 +50,7 @@ export function FlipCard({
             <p className="flip-face-body hint">
               {answerHint || 'No hint yet.'}
             </p>
-            <span className="flip-face-cue">Tap to flip back</span>
+            <span className="flip-face-cue">Click or press Enter to flip back</span>
           </div>
         </div>
       </button>

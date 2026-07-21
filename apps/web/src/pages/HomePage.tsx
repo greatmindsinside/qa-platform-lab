@@ -1,108 +1,75 @@
 /**
- * @fileoverview Home / progression dashboard with learning-path sections.
+ * @fileoverview Home — quiet progress + one Practice action.
  *
- * **What:** XP summary + Beginner→Expert curriculum tiles + Your decks.
- * **Why:** Soft path guidance — Start here, stage labels, no unlock gates.
+ * **What:** Display name, XP bar, Practice the recommended deck.
+ * **Why:** Apple-like clarity; Decks/Quests live in the sidebar.
  */
 
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import type { Deck, LearningStage, PublicUser } from '@lab/shared';
+import type { Deck, PublicUser } from '@lab/shared';
 import { api } from '../lib/api';
-import { groupDecksByPath, STAGE_LABELS } from '../lib/path-grouping';
 
 export type HomePageProps = {
   token: string;
   user: PublicUser;
   onRefresh: (u: PublicUser) => void;
-  onSignOut: () => void;
 };
 
-function stageBadgeLabel(stage: LearningStage | null): string | null {
-  if (!stage) return null;
-  return STAGE_LABELS[stage];
-}
-
 /**
- * Post-login home: RPG-lite summary + staged curriculum + create deck.
+ * Post-login hub: progress and one obvious next action.
  */
-export function HomePage({
-  token,
-  user,
-  onRefresh,
-  onSignOut,
-}: HomePageProps) {
+export function HomePage({ token, user, onRefresh }: HomePageProps) {
   const [decks, setDecks] = useState<Deck[]>([]);
-  const [deckName, setDeckName] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    void api.decks(token).then(setDecks).catch((e: Error) => setError(e.message));
-    void api
-      .me(token)
-      .then(onRefresh)
-      .catch((e: Error) => setError(e.message));
+    let cancelled = false;
+    setLoading(true);
+    void (async () => {
+      try {
+        const [nextDecks, me] = await Promise.all([
+          api.decks(token),
+          api.me(token),
+        ]);
+        if (cancelled) return;
+        setDecks(nextDecks);
+        onRefresh(me);
+      } catch (e) {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : 'Failed to load home');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [token, onRefresh]);
 
-  const sections = useMemo(() => groupDecksByPath(decks), [decks]);
-
-  async function createDeck(e: FormEvent) {
-    e.preventDefault();
-    setError('');
-    try {
-      await api.createDeck(token, deckName);
-      setDeckName('');
-      setDecks(await api.decks(token));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Create failed');
-    }
-  }
-
-  const createDeckPanel = (
-    <details className="panel admin-details create-deck-panel">
-      <summary>Create a new deck</summary>
-      <form className="row stack-sm" onSubmit={createDeck}>
-        <label style={{ flex: 1 }}>
-          Deck name
-          <input
-            value={deckName}
-            onChange={(e) => setDeckName(e.target.value)}
-            placeholder="New deck"
-          />
-        </label>
-        <button type="submit">Create deck</button>
-      </form>
-      <p className="muted" style={{ margin: '0.5rem 0 0' }}>
-        Custom decks appear under Your decks (not part of the curriculum path).
-      </p>
-    </details>
-  );
+  const recommended = useMemo(() => {
+    const startHere = decks.find((d) => d.recommendedStart);
+    if (startHere) return startHere;
+    const byMastery = [...decks]
+      .filter((d) => d.stage != null)
+      .sort(
+        (a, b) =>
+          (a.masteryPercent ?? 0) - (b.masteryPercent ?? 0) || a.id - b.id,
+      );
+    return byMastery[0] ?? decks[0] ?? null;
+  }, [decks]);
 
   return (
-    <div className="app-shell stack">
-      <div className="row" style={{ justifyContent: 'space-between' }}>
-        <div>
-          <p className="brand hero-brand">Quest Deck</p>
-          <p className="muted">
-            {user.displayName} · {user.title} · Level {user.level}
-          </p>
-        </div>
-        <button type="button" className="secondary" onClick={onSignOut}>
-          Sign out
-        </button>
-      </div>
-
-      <div className="panel stack">
-        <div className="row" style={{ justifyContent: 'space-between' }}>
-          <strong>
-            {user.totalXp} XP · Streak {user.currentStreak}
-          </strong>
-          <span className="muted">
-            {user.xpIntoLevel} / 100 to next level
-          </span>
-        </div>
+    <div className="stack shell-page home-simple">
+      <header className="home-simple-hero">
+        <h1 className="home-simple-name">{user.displayName}</h1>
+        <p className="home-simple-progress muted">
+          Level {user.level} · {user.totalXp} XP · ★ {user.currentStreak}
+        </p>
         <div
-          className="xp-bar"
+          className="xp-bar home-simple-bar"
           role="progressbar"
           aria-valuenow={user.xpIntoLevel}
           aria-valuemin={0}
@@ -111,62 +78,41 @@ export function HomePage({
         >
           <span style={{ width: `${user.xpIntoLevel}%` }} />
         </div>
-      </div>
+        <p className="home-simple-xp-label muted">
+          {user.xpIntoLevel} / 100
+        </p>
+      </header>
 
-      <p className="practice-guide">
-        Follow the path Beginner → Intermediate → Expert. Soft guidance only —
-        every stage stays open.
-      </p>
-      {error ? <p className="error">{error}</p> : null}
+      {error ? (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      ) : null}
+      {loading ? (
+        <p className="muted" role="status">
+          Loading…
+        </p>
+      ) : null}
 
-      {sections.map((section) => (
-        <section key={section.key} className="stack path-section">
-          <h2 className="section-title">{section.title}</h2>
-          {section.key === 'beginner' ? (
-            <p className="muted path-section-hint" style={{ margin: 0 }}>
-              Recommended first stop for foundations, then move up when ready.
-            </p>
-          ) : null}
-          {section.key === 'yours' ? createDeckPanel : null}
-          {section.decks.length === 0 && section.key === 'yours' ? (
-            <p className="muted">No custom decks yet — create one above.</p>
-          ) : section.decks.length > 0 ? (
-            <ul className="deck-list deck-tiles">
-              {section.decks.map((d) => (
-                <li key={d.id} className="deck-tile">
-                  <div className="deck-tile-main">
-                    <div className="deck-tile-badges">
-                      {d.recommendedStart ? (
-                        <span className="start-here-badge">Start here</span>
-                      ) : null}
-                      {stageBadgeLabel(d.stage) ? (
-                        <span className={`stage-badge stage-badge-${d.stage}`}>
-                          {stageBadgeLabel(d.stage)}
-                        </span>
-                      ) : null}
-                    </div>
-                    <strong className="deck-tile-name">{d.name}</strong>
-                    <p className="muted deck-tile-meta">
-                      Mastery {d.masteryPercent ?? 0}% · {d.description}
-                    </p>
-                  </div>
-                  <div className="deck-tile-actions">
-                    <Link
-                      className="practice-deck-cta"
-                      to={`/decks/${d.id}/play`}
-                    >
-                      Practice
-                    </Link>
-                    <Link className="text-link" to={`/decks/${d.id}`}>
-                      Manage
-                    </Link>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </section>
-      ))}
+      {!loading && recommended ? (
+        <div className="home-simple-action">
+          <Link
+            className="practice-deck-cta practice-deck-cta-lg home-simple-practice"
+            to={`/decks/${recommended.id}/play`}
+          >
+            Practice
+          </Link>
+          <p className="home-simple-deck muted">{recommended.name}</p>
+        </div>
+      ) : null}
+
+      {!loading && !recommended ? (
+        <div className="home-simple-action">
+          <Link className="practice-deck-cta practice-deck-cta-lg" to="/decks">
+            Decks
+          </Link>
+        </div>
+      ) : null}
     </div>
   );
 }

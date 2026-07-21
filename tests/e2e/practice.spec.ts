@@ -11,6 +11,7 @@ test('practice deck auto-advances @smoke @progression', async ({
 }) => {
   await loginAs('admin');
 
+  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Decks' }).click();
   await page
     .getByRole('listitem')
     .filter({ hasText: CURRICULUM_DECKS.foundations })

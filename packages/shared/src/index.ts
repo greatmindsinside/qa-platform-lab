@@ -67,6 +67,17 @@ export type PublicUser = {
   xpToNextLevel: number;
 };
 
+/** Public leaderboard row — no email. */
+export type LeaderboardEntry = {
+  rank: number;
+  userId: number;
+  displayName: string;
+  title: string;
+  level: number;
+  totalXp: number;
+  currentStreak: number;
+};
+
 export type Deck = {
   id: number;
   name: string;
@@ -124,6 +135,53 @@ export type PracticeResult = {
   /** MCQ only — present after an MCQ practice attempt. */
   correct?: boolean;
   correctIndex?: number;
+};
+
+/** First adventure completion award (005); replays award 0. */
+export const ADVENTURE_COMPLETION_XP = 25;
+
+export type AdventureProgressStatus =
+  | 'not_started'
+  | 'in_progress'
+  | 'completed';
+
+export type AdventureEndingTone = 'strong' | 'weak';
+
+export type AdventureSummary = {
+  id: number;
+  slug: string;
+  title: string;
+  blurb: string;
+  learningThemes: string[];
+  progressStatus: AdventureProgressStatus;
+  awardGranted: boolean;
+};
+
+export type AdventureChoice = {
+  id: number;
+  label: string;
+};
+
+export type LearningTakeaway = {
+  id: string;
+  label: string;
+};
+
+export type AdventureSceneView = {
+  adventureId: number;
+  sceneId: number;
+  body: string;
+  isEnding: boolean;
+  endingTone: AdventureEndingTone | null;
+  choices: AdventureChoice[];
+  takeaways?: LearningTakeaway[];
+  xpAwarded?: number;
+  totalXp?: number;
+  level?: number;
+  title?: string;
+  currentStreak?: number;
+  xpIntoLevel?: number;
+  xpToNextLevel?: number;
 };
 
 /** Public demo accounts — not production secrets. */

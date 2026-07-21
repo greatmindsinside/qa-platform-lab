@@ -7,9 +7,12 @@
  */
 
 import type {
+  AdventureSceneView,
+  AdventureSummary,
   Card,
   Deck,
   DeckMember,
+  LeaderboardEntry,
   PracticeResult,
   PublicUser,
 } from '@lab/shared';
@@ -81,6 +84,28 @@ export const api = {
       headers: authHeaders(token),
     });
     return parse<PublicUser>(res);
+  },
+  async updateProfile(token: string, displayName: string) {
+    const res = await fetch(`${API_BASE}/api/me`, {
+      method: 'PATCH',
+      headers: authHeaders(token),
+      body: JSON.stringify({ displayName }),
+    });
+    return parse<PublicUser>(res);
+  },
+  async leaderboard(token: string) {
+    const res = await fetch(`${API_BASE}/api/leaderboard`, {
+      headers: authHeaders(token),
+    });
+    return parse<LeaderboardEntry[]>(res);
+  },
+  async submitSupport(token: string, subject: string, message: string) {
+    const res = await fetch(`${API_BASE}/api/support`, {
+      method: 'POST',
+      headers: authHeaders(token),
+      body: JSON.stringify({ subject, message }),
+    });
+    return parse<{ ok: true; ticketId: string }>(res);
   },
   async decks(token: string) {
     const res = await fetch(`${API_BASE}/api/decks`, {
@@ -157,5 +182,42 @@ export const api = {
       headers: authHeaders(token, false),
     });
     return parse<void>(res);
+  },
+  async adventures(token: string) {
+    const res = await fetch(`${API_BASE}/api/adventures`, {
+      headers: authHeaders(token),
+    });
+    return parse<AdventureSummary[]>(res);
+  },
+  async adventureScene(token: string, adventureId: number) {
+    const res = await fetch(`${API_BASE}/api/adventures/${adventureId}/scene`, {
+      headers: authHeaders(token),
+    });
+    return parse<AdventureSceneView>(res);
+  },
+  async adventureChoice(
+    token: string,
+    adventureId: number,
+    choiceId: number,
+  ) {
+    const res = await fetch(
+      `${API_BASE}/api/adventures/${adventureId}/choices`,
+      {
+        method: 'POST',
+        headers: authHeaders(token),
+        body: JSON.stringify({ choiceId }),
+      },
+    );
+    return parse<AdventureSceneView>(res);
+  },
+  async adventureRestart(token: string, adventureId: number) {
+    const res = await fetch(
+      `${API_BASE}/api/adventures/${adventureId}/restart`,
+      {
+        method: 'POST',
+        headers: authHeaders(token),
+      },
+    );
+    return parse<AdventureSceneView>(res);
   },
 };
