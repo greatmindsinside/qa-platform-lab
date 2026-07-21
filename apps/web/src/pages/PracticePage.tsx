@@ -5,11 +5,16 @@
  * **Why:** XP/grading stay on the server — UI only collects the attempt.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import type { Card, PublicUser } from '@lab/shared';
 import { FlipCard } from '../components/FlipCard';
 import { api } from '../lib/api';
+import {
+  displayIndexForOriginal,
+  shuffleMcqOptions,
+  type McqDisplayOrder,
+} from '../lib/mcq-order';
 
 const OPTION_LABELS = ['A', 'B', 'C', 'D'] as const;
 
@@ -29,6 +34,7 @@ export function PracticePage({ token, onUser }: PracticePageProps) {
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [mcqOrder, setMcqOrder] = useState<McqDisplayOrder | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -42,6 +48,12 @@ export function PracticePage({ token, onUser }: PracticePageProps) {
           if (found) {
             setCard(found);
             setFlipped(false);
+            setResult('');
+            setMcqOrder(
+              found.kind === 'mcq' && found.options
+                ? shuffleMcqOptions(found.options)
+                : null,
+            );
             return;
           }
         }
@@ -51,6 +63,11 @@ export function PracticePage({ token, onUser }: PracticePageProps) {
       }
     })();
   }, [token, cardId]);
+
+  const displayOptions = useMemo(() => {
+    if (!card || card.kind !== 'mcq') return [];
+    return mcqOrder?.displayOptions ?? card.options ?? [];
+  }, [card, mcqOrder]);
 
   async function rate(confidence: string) {
     if (!flipped) return;
@@ -69,15 +86,21 @@ export function PracticePage({ token, onUser }: PracticePageProps) {
     }
   }
 
-  async function selectOption(selectedIndex: number) {
+  async function selectOption(displayIndex: number) {
     setError('');
     setBusy(true);
     try {
-      const res = await api.practiceMcq(token, cardId, selectedIndex);
+      const originalIndex =
+        mcqOrder?.toOriginal[displayIndex] ?? displayIndex;
+      const res = await api.practiceMcq(token, cardId, originalIndex);
       const verdict = res.correct ? 'Correct' : 'Incorrect';
+      const correctDisplay =
+        res.correctIndex !== undefined && mcqOrder
+          ? displayIndexForOriginal(mcqOrder.toOriginal, res.correctIndex)
+          : res.correctIndex;
       const key =
-        res.correctIndex !== undefined
-          ? ` · answer ${OPTION_LABELS[res.correctIndex] ?? res.correctIndex}`
+        !res.correct && correctDisplay !== undefined && correctDisplay >= 0
+          ? ` · answer ${OPTION_LABELS[correctDisplay] ?? correctDisplay}`
           : '';
       setResult(
         `${verdict}${key} · +${res.xpAwarded} XP · total ${res.totalXp} · streak ${res.currentStreak}`,
@@ -115,21 +138,19 @@ export function PracticePage({ token, onUser }: PracticePageProps) {
 
   return (
     <div className="stack shell-page">
-      <div className="panel stack practice-panel">
-        <Link className="practice-back" to={`/decks/${card.deckId}`}>
+      <div className="stack practice-surface">
+        <Link className="practice-back text-link" to={`/decks/${card.deckId}`}>
           ← Deck
         </Link>
-        <h1 className="brand practice-title">
-          Practice{isMcq ? ' · MCQ' : ''}
-        </h1>
+        <h1 className="page-title practice-title">Practice</h1>
 
         {isMcq ? (
           <>
             <p className="practice-prompt">{card.prompt}</p>
             <div className="mcq-options" role="group" aria-label="Answer options">
-              {(card.options ?? []).map((opt, index) => (
+              {displayOptions.map((opt, index) => (
                 <button
-                  key={OPTION_LABELS[index]}
+                  key={`${card.id}-${index}-${opt}`}
                   type="button"
                   className="mcq-option"
                   disabled={busy || Boolean(result)}
@@ -175,9 +196,8 @@ export function PracticePage({ token, onUser }: PracticePageProps) {
           </>
         )}
 
-        {result ? <p className="practice-result">{result}</p> : null}
+        {result ? <p className="practice-result" role="status">{result}</p> : null}
         {error ? <p className="error">{error}</p> : null}
-        <Link to="/">Back to Home</Link>
       </div>
     </div>
   );

@@ -56,7 +56,7 @@ test('adventure completes with takeaways and XP @smoke @progression', async ({
   ).toBeVisible();
   await expect(page.locator('.adventure-takeaways li').first()).toBeVisible();
 
-  await page.getByRole('link', { name: 'Back to Home' }).click();
+  await page.getByRole('link', { name: '← Home' }).click();
   await expect(page.getByText(/Level \d+ · \d+ XP/)).toBeVisible();
   const after = await page.getByText(/Level \d+ · \d+ XP/).innerText();
   const afterXp = Number(after.match(/·\s*(\d+)\s*XP/)?.[1] ?? '0');

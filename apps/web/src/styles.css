@@ -7,18 +7,21 @@
   --void: #070b12;
   --panel: rgba(12, 22, 36, 0.72);
   --panel-edge: rgba(0, 240, 255, 0.22);
-  --ink: #e6f7ff;
-  --muted: #9eb2c4;
+  --ink: #f1efe8;
+  --muted: #a9a89e;
   --cyan: #00e8ff;
   --cyan-dim: #0099aa;
   --magenta: #ff2a6d;
   --amber: #ffc14a;
+  --accent: #ffc14a;
+  --accent-hover: #ffe29a;
   --danger: #ff3d6e;
   --bar-track: rgba(0, 232, 255, 0.12);
   --bar-fill-a: #00e8ff;
   --bar-fill-b: #39ff14;
   --glow-cyan: 0 0 18px rgba(0, 232, 255, 0.35);
   --glow-magenta: 0 0 14px rgba(255, 42, 109, 0.35);
+  --glow-accent: 0 0 16px rgba(255, 193, 74, 0.35);
   --font-body: 'Rajdhani', system-ui, sans-serif;
   --font-display: 'Aldrich', system-ui, sans-serif;
   --shell-gold: #f5c518;
@@ -95,13 +98,13 @@ h2,
 }
 
 a {
-  color: var(--cyan);
+  color: var(--accent);
   transition: color 0.15s ease, text-shadow 0.15s ease;
 }
 
 a:hover {
-  color: #9ff7ff;
-  text-shadow: var(--glow-cyan);
+  color: var(--accent-hover);
+  text-shadow: var(--glow-accent);
 }
 
 button,
@@ -140,12 +143,12 @@ button:active:not(:disabled) {
 
 button.secondary {
   background: transparent;
-  color: var(--cyan);
+  color: var(--accent);
   box-shadow: none;
 }
 
 button.secondary:hover:not(:disabled) {
-  background: rgba(0, 232, 255, 0.08);
+  background: rgba(255, 193, 74, 0.08);
 }
 
 button.danger {
@@ -215,12 +218,12 @@ label {
   font-size: clamp(2rem, 5vw, 3rem);
   margin: 0 0 0.35rem;
   letter-spacing: 0.08em;
-  color: var(--cyan);
-  text-shadow: var(--glow-cyan);
+  color: var(--shell-gold);
+  text-shadow: var(--shell-glow);
 }
 
 .muted {
-  color: #b8c9da;
+  color: var(--muted);
 }
 
 .error {
@@ -317,6 +320,12 @@ label {
   margin-inline: auto;
 }
 
+.practice-surface {
+  max-width: 560px;
+  margin-inline: auto;
+  gap: 1rem;
+}
+
 .practice-back {
   width: fit-content;
   text-decoration: none;
@@ -337,7 +346,7 @@ label {
 
 .practice-guide {
   margin: 0;
-  color: #c5d8e8;
+  color: var(--muted);
   font-size: 0.98rem;
   line-height: 1.4;
 }
@@ -379,13 +388,13 @@ label {
 }
 
 .stage-badge-beginner {
-  color: var(--cyan);
-  border: 1px solid rgba(0, 232, 255, 0.35);
+  color: var(--shell-mastery);
+  border: 1px solid rgba(45, 212, 168, 0.4);
 }
 
 .stage-badge-intermediate {
-  color: #9ad4ff;
-  border: 1px solid rgba(154, 212, 255, 0.4);
+  color: var(--accent);
+  border: 1px solid rgba(255, 193, 74, 0.4);
 }
 
 .stage-badge-expert {
@@ -412,7 +421,31 @@ label {
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--cyan);
+  color: var(--accent);
+}
+
+.page-section-heading {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: var(--muted);
+}
+
+.settings-block {
+  gap: 0.85rem;
+  padding: 0 0 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.settings-block:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
 }
 
 .stack-sm {
@@ -421,7 +454,7 @@ label {
 }
 
 .text-link {
-  color: var(--cyan);
+  color: var(--accent);
   font-weight: 600;
   text-decoration: none;
 }
@@ -440,25 +473,69 @@ button.text-link:hover:not(:disabled) {
 }
 
 .text-link:hover {
-  text-shadow: var(--glow-cyan);
+  text-shadow: var(--glow-accent);
 }
 
 .decks-dashboard {
   max-width: 1280px;
   width: 100%;
   margin-inline: auto;
+  gap: 1.75rem;
 }
 
 .decks-page-header {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   gap: 1rem;
 }
 
+.decks-dashboard .page-title {
+  letter-spacing: -0.02em;
+}
+
+.decks-dashboard .create-deck-header-btn {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: var(--accent);
+  padding: 0.25rem 0;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.decks-dashboard .create-deck-header-btn:hover:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  background: transparent;
+  text-shadow: var(--glow-accent);
+}
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  border-radius: 0;
+}
+
 .continue-label {
   color: var(--amber);
+}
+
+.decks-section-heading {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--muted);
+}
+
+.continue-learning {
+  display: grid;
+  gap: 0.85rem;
 }
 
 .continue-card {
@@ -466,11 +543,12 @@ button.text-link:hover:not(:disabled) {
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 1.25rem;
-  padding: 1.25rem 1.5rem;
-  border: 1px solid rgba(255, 193, 74, 0.45);
-  background: var(--panel);
-  border-radius: 4px;
+  gap: 1.25rem 2rem;
+  padding: 0.15rem 0 0.35rem 1rem;
+  border: none;
+  border-left: 2px solid rgba(255, 193, 74, 0.55);
+  background: transparent;
+  border-radius: 0;
 }
 
 .continue-card-main {
@@ -483,7 +561,9 @@ button.text-link:hover:not(:disabled) {
 .deck-filter-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 1rem;
+  gap: 0.5rem 1.25rem;
+  padding-bottom: 0.15rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .deck-filter-tab {
@@ -492,7 +572,8 @@ button.text-link:hover:not(:disabled) {
   border-bottom: 2px solid transparent;
   border-radius: 0;
   color: var(--muted);
-  padding: 0.35rem 0.15rem;
+  padding: 0.45rem 0.05rem 0.55rem;
+  margin-bottom: -1px;
   cursor: pointer;
   box-shadow: none;
   text-transform: none;
@@ -503,13 +584,13 @@ button.text-link:hover:not(:disabled) {
 .deck-filter-tab:hover:not(:disabled) {
   transform: none;
   box-shadow: none;
-  color: var(--cyan);
+  color: var(--accent);
   background: transparent;
 }
 
 .deck-filter-tab.is-active {
-  color: var(--cyan);
-  border-bottom-color: var(--cyan);
+  color: var(--accent);
+  border-bottom-color: var(--accent);
 }
 
 .deck-card-grid {
@@ -517,18 +598,28 @@ button.text-link:hover:not(:disabled) {
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0 2rem;
 }
 
 .deck-card {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
-  padding: 1.25rem; /* 20px */
-  border-radius: 4px;
-  background: var(--panel);
-  border: 1px solid var(--panel-edge);
+  gap: 0.75rem;
+  padding: 1.35rem 0 1.5rem;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.decks-dashboard .stage-badge {
+  border: none;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-weight: 600;
+  letter-spacing: 0.08em;
 }
 
 .deck-card-top {
@@ -538,76 +629,98 @@ button.text-link:hover:not(:disabled) {
 
 .deck-card-title {
   display: block;
-  font-size: 1.05rem;
-  font-weight: 700;
+  font-size: 1.12rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   color: inherit;
   text-decoration: none;
 }
 
 .deck-card-title:hover {
-  color: var(--cyan);
+  color: var(--accent);
 }
 
 .deck-card-desc {
-  margin: 0.35rem 0 0;
+  margin: 0.25rem 0 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  line-height: 1.45;
 }
 
 .deck-card-meta {
   margin: 0.35rem 0 0;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
 }
 
-.deck-card .practice-deck-cta {
+.deck-card .practice-deck-cta,
+.continue-card .practice-deck-cta {
   margin-top: auto;
   width: fit-content;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0.2rem 0;
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.deck-card .practice-deck-cta:hover,
+.continue-card .practice-deck-cta:hover {
+  transform: none;
+  box-shadow: none;
+  background: transparent;
+  text-shadow: var(--glow-accent);
 }
 
 .mastery-bar {
-  height: 0.45rem;
-  border-radius: 2px;
-  background: rgba(0, 232, 255, 0.12);
+  height: 0.28rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
 }
 
 .mastery-bar-fill {
   display: block;
   height: 100%;
+  border-radius: inherit;
   background: var(--cyan);
 }
 
 .deck-card-create {
-  border-style: dashed;
+  border-bottom-style: dashed;
+  border-bottom-color: rgba(0, 232, 255, 0.22);
 }
 
 .deck-create-tile {
-  display: grid;
-  gap: 0.35rem;
+  display: block;
   width: 100%;
   text-align: left;
   background: transparent;
   border: none;
-  color: inherit;
+  color: var(--accent);
   cursor: pointer;
   box-shadow: none;
   padding: 0;
   text-transform: none;
-  letter-spacing: normal;
-  font-weight: inherit;
+  letter-spacing: 0.02em;
+  font-weight: 600;
+  font-size: 1.05rem;
 }
 
 .deck-create-tile:hover:not(:disabled) {
   transform: none;
   box-shadow: none;
   background: transparent;
-  color: var(--cyan);
+  color: var(--accent-hover);
 }
 
 .your-decks-section {
-  margin-top: 0.5rem;
+  margin-top: 0.75rem;
+  gap: 0.85rem;
 }
 
 .deck-tiles {
@@ -714,8 +827,8 @@ button.text-link:hover:not(:disabled) {
 }
 
 .deck-badge-open {
-  color: var(--cyan);
-  border: 1px solid rgba(0, 232, 255, 0.35);
+  color: var(--shell-open);
+  border: 1px solid rgba(167, 139, 250, 0.45);
 }
 
 .deck-badge-mcq {
@@ -744,19 +857,19 @@ button.text-link:hover:not(:disabled) {
   gap: 0.2rem;
   padding: 0.85rem 1rem;
   border-radius: 6px;
-  background: rgba(0, 232, 255, 0.1);
-  border: 1px solid rgba(0, 232, 255, 0.35);
-  box-shadow: var(--glow-cyan);
+  background: rgba(255, 193, 74, 0.1);
+  border: 1px solid rgba(255, 193, 74, 0.35);
+  box-shadow: var(--glow-accent);
 }
 
 .xp-toast-amount {
   font-size: 1.25rem;
-  color: var(--cyan);
-  text-shadow: var(--glow-cyan);
+  color: var(--accent);
+  text-shadow: var(--glow-accent);
 }
 
 .xp-toast-detail {
-  color: #c5d8e8;
+  color: var(--muted);
   font-size: 0.92rem;
 }
 
@@ -799,37 +912,33 @@ button.text-link:hover:not(:disabled) {
 }
 
 .session-complete {
-  text-align: center;
-  align-items: center;
+  text-align: left;
+  align-items: stretch;
+  gap: 0.85rem;
 }
 
 .session-complete-label {
   margin: 0;
-  font-family: var(--font-body);
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--amber);
 }
 
 .session-xp-big {
   margin: 0;
-  font-size: clamp(2rem, 6vw, 2.75rem);
-  color: var(--cyan);
-  text-shadow: var(--glow-cyan);
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 700;
+  color: var(--accent);
 }
 
 .session-complete-actions {
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: wrap;
-  gap: 1rem;
+  align-items: center;
+  gap: 0.85rem 1.25rem;
 }
 
 .practice-rate-hint {
   margin: 0;
   font-size: 0.95rem;
-  color: #c5d8e8;
+  color: var(--muted);
 }
 
 .practice-progress {
@@ -837,9 +946,9 @@ button.text-link:hover:not(:disabled) {
   font-family: var(--font-body);
   font-size: 0.85rem;
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--cyan);
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--muted);
 }
 
 .practice-deck-cta {
@@ -894,8 +1003,8 @@ button.practice-cta-link {
 
 .practice-result {
   margin: 0;
-  color: var(--cyan);
-  text-shadow: var(--glow-cyan);
+  color: var(--accent);
+  text-shadow: var(--glow-accent);
   font-weight: 700;
   letter-spacing: 0.04em;
 }
@@ -931,7 +1040,7 @@ button.practice-cta-link {
   font-family: var(--font-body);
   font-weight: 700;
   font-size: 1.05rem;
-  color: var(--cyan);
+  color: var(--accent);
   letter-spacing: 0.04em;
   min-width: 1.25rem;
 }
@@ -1057,15 +1166,15 @@ button.practice-cta-link {
 
 .flip-face-label {
   font-family: var(--font-body);
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--cyan);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--muted);
 }
 
 .flip-back .flip-face-label {
-  color: var(--amber);
+  color: var(--muted);
 }
 
 .flip-face-body {
@@ -1110,9 +1219,8 @@ button.practice-cta-link {
   max-width: 42rem;
 }
 
-.adventure-brand {
-  margin: 0;
-  font-size: clamp(1.4rem, 3vw, 1.85rem);
+.adventure-header {
+  gap: 0.35rem;
 }
 
 .adventure-prose {
@@ -1123,8 +1231,14 @@ button.practice-cta-link {
   white-space: pre-wrap;
 }
 
+.adventure-scene {
+  gap: 1.15rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 .adventure-choices {
-  margin-top: 0.75rem;
+  margin-top: 0.25rem;
   display: grid;
   gap: 0.85rem;
 }
@@ -1142,7 +1256,7 @@ button.practice-cta-link {
 .adventure-takeaways {
   margin: 0;
   padding-left: 1.15rem;
-  color: #cfefff;
+  color: var(--ink);
 }
 
 .adventure-takeaways li {
@@ -1173,8 +1287,8 @@ button.practice-cta-link {
   z-index: 100;
   padding: 0.55rem 0.9rem;
   background: #041018;
-  color: var(--cyan);
-  border: 1px solid var(--cyan);
+  color: var(--accent);
+  border: 1px solid var(--accent);
   border-radius: 4px;
   font-weight: 700;
   text-decoration: none;
@@ -1203,7 +1317,7 @@ button.practice-cta-link {
   gap: 0.3rem;
   margin: 0;
   font-size: 0.85rem;
-  color: #c5d4e3;
+  color: var(--muted);
   font-weight: 600;
 }
 
@@ -1212,8 +1326,9 @@ button.practice-cta-link {
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #9aabbc;
+  color: var(--muted);
   margin-left: 0.35rem;
+  opacity: 0.75;
 }
 
 .shell-footer-muted {
@@ -1320,8 +1435,8 @@ button.practice-cta-link {
   font-weight: 700;
   color: var(--ink);
   background: #111827;
-  border: 2px solid var(--shell-mcq);
-  box-shadow: 0 0 12px rgba(59, 158, 255, 0.45);
+  border: 2px solid var(--shell-gold);
+  box-shadow: 0 0 12px rgba(245, 197, 24, 0.35);
 }
 
 .shell-level {
@@ -1352,7 +1467,7 @@ button.practice-cta-link {
   display: block;
   padding: 0.65rem 0.85rem;
   border-radius: 999px;
-  color: #c5d4e3;
+  color: var(--muted);
   text-decoration: none;
   font-weight: 600;
   font-size: 0.95rem;
@@ -1360,15 +1475,16 @@ button.practice-cta-link {
 }
 
 .shell-nav-link.is-active {
-  background: rgba(59, 158, 255, 0.18);
-  border-left-color: var(--shell-mcq);
-  color: #fff;
+  background: rgba(255, 193, 74, 0.14);
+  border-left-color: var(--shell-gold);
+  color: #fff4d6;
 }
 
 .shell-nav-link.is-stub {
-  color: #9aabbc;
+  color: var(--muted);
   cursor: default;
   font-weight: 500;
+  opacity: 0.7;
 }
 
 .shell-main {
@@ -1382,7 +1498,7 @@ button.practice-cta-link {
   margin: 0;
   font-family: var(--font-display);
   font-size: clamp(1.75rem, 4vw, 2.35rem);
-  color: #f1f7ff;
+  color: var(--ink);
   letter-spacing: 0.03em;
 }
 
@@ -1400,7 +1516,7 @@ button.practice-cta-link {
   margin: 0;
   font-family: var(--font-display);
   font-size: clamp(1.85rem, 4vw, 2.5rem);
-  color: #f1f7ff;
+  color: var(--ink);
   letter-spacing: 0.02em;
   font-weight: 600;
 }
@@ -1435,6 +1551,107 @@ button.practice-cta-link {
   font-size: 1.05rem;
 }
 
+/* Home — Apple HIG clarity/deference inside quest tokens */
+.home-apple {
+  max-width: 22rem;
+  padding-top: clamp(2.5rem, 8vh, 4.5rem);
+  gap: 2.75rem;
+}
+
+.home-apple-hero {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.home-apple-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2.15rem, 5vw, 2.85rem);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.home-apple-meta {
+  margin: 0.15rem 0 0;
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+}
+
+.home-apple-progress {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 1.15rem;
+}
+
+.home-apple-bar {
+  height: 0.35rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.home-apple-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--cyan);
+  box-shadow: none;
+}
+
+.home-apple-xp-label {
+  margin: 0;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+}
+
+.home-apple-action {
+  display: grid;
+  gap: 0.65rem;
+  justify-items: stretch;
+}
+
+.home-apple-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 193, 74, 0.4);
+  background: rgba(255, 193, 74, 0.14);
+  color: #fff4d6;
+  font-family: var(--font-body);
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  box-shadow: none;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.home-apple-cta:hover {
+  background: rgba(255, 193, 74, 0.22);
+  border-color: rgba(255, 193, 74, 0.6);
+  text-shadow: none;
+  transform: none;
+}
+
+button.home-apple-cta {
+  cursor: pointer;
+  width: fit-content;
+}
+
+.home-apple-deck {
+  margin: 0;
+  text-align: center;
+  font-size: 0.98rem;
+}
+
 .home-next-card {
   display: flex;
   flex-wrap: wrap;
@@ -1449,6 +1666,10 @@ button.practice-cta-link {
   gap: 1rem;
 }
 
+.leaderboard-wrap {
+  overflow: auto;
+}
+
 .leaderboard-table {
   width: 100%;
   border-collapse: collapse;
@@ -1457,24 +1678,25 @@ button.practice-cta-link {
 
 .leaderboard-table th,
 .leaderboard-table td {
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 0.35rem;
   text-align: left;
-  border-bottom: 1px solid var(--shell-border);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .leaderboard-table th {
   color: var(--muted);
-  font-size: 0.78rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  font-weight: 600;
+  text-transform: none;
 }
 
 .leaderboard-you {
-  background: rgba(59, 158, 255, 0.12);
+  background: rgba(255, 193, 74, 0.1);
 }
 
 .leaderboard-you-tag {
-  color: var(--cyan);
+  color: var(--accent);
   font-weight: 700;
   font-size: 0.85rem;
 }
@@ -1486,7 +1708,7 @@ button.practice-cta-link {
 }
 
 .shell-footer-links a:hover {
-  color: var(--cyan);
+  color: var(--accent);
 }
 
 .shell-page-greeting {
@@ -1554,8 +1776,8 @@ button.practice-cta-link {
   display: inline-block;
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
-  background: rgba(59, 158, 255, 0.2);
-  color: #9dceff;
+  background: rgba(255, 193, 74, 0.16);
+  color: var(--accent);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -1603,8 +1825,9 @@ button.practice-cta-link {
 }
 
 .mastery-ring-inner span {
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
   color: var(--muted);
 }
 
@@ -1612,6 +1835,76 @@ button.practice-cta-link {
   justify-content: space-between;
   align-items: center;
   gap: 1rem 1.25rem;
+}
+
+.deck-detail-hero {
+  gap: 0.45rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.deck-detail-stage {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.deck-detail-title {
+  margin: 0;
+}
+
+.deck-detail-desc {
+  margin: 0;
+  max-width: 40rem;
+  line-height: 1.45;
+}
+
+.deck-card-progress {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+}
+
+.deck-card-meta {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.deck-card-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.deck-card-list-item {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.deck-card-list-link {
+  display: grid;
+  grid-template-columns: 3.25rem 1fr;
+  gap: 0.75rem;
+  align-items: baseline;
+  padding: 0.85rem 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.deck-card-list-link:hover .deck-card-list-title {
+  color: var(--accent);
+}
+
+.deck-card-list-kind {
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.deck-card-list-title {
+  font-size: 0.98rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink);
 }
 
 .deck-search {
@@ -1679,7 +1972,7 @@ button.practice-cta-link {
 .quest-card-title {
   font-size: 0.98rem;
   line-height: 1.3;
-  color: #f1f7ff;
+  color: var(--ink);
 }
 
 .quest-card-snip {
@@ -1689,9 +1982,9 @@ button.practice-cta-link {
 }
 
 .deck-badge-mcq {
-  background: rgba(59, 158, 255, 0.2);
-  color: #9dceff;
-  border: 1px solid rgba(59, 158, 255, 0.45);
+  background: rgba(255, 193, 74, 0.16);
+  color: var(--accent);
+  border: 1px solid rgba(255, 193, 74, 0.45);
 }
 
 .deck-badge-open {
@@ -1704,6 +1997,18 @@ button.practice-cta-link {
   position: sticky;
   top: 4.25rem;
   gap: 1.15rem;
+}
+
+.deck-rail-cta {
+  width: 100%;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.deck-rail-block {
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .rail-card {
@@ -1802,18 +2107,20 @@ button.practice-cta-link {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.85rem 1rem;
-  min-height: 2.85rem;
-  background: #0a1018;
-  border: 1px solid var(--shell-border);
-  color: #e8f2ff;
-  border-radius: 8px;
+  padding: 0.7rem 0;
+  min-height: 2.5rem;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0;
+  color: var(--ink);
   font-weight: 600;
+  box-shadow: none;
 }
 
 .rail-action-danger {
   color: #ffb4c0;
-  border-color: rgba(255, 61, 110, 0.35);
+  border-bottom-color: rgba(255, 61, 110, 0.25);
 }
 
 .rail-members {

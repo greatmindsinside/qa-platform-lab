@@ -28,14 +28,16 @@ test('mcq deck session advances with Next @smoke @progression', async ({ page })
   await page.getByRole('button', { name: 'Next' }).click();
   await expect(page.getByText('Card 2 of 8')).toBeVisible();
 
-  // Card 2 MCQ — correct answer is B (index 1)
-  await page.getByRole('button', { name: /B\s*Critical path that proves/i }).click();
+  // Card 2 MCQ — click by answer text (option letter is shuffled)
+  await page
+    .getByRole('button', { name: /Critical path that proves the system boots/i })
+    .click();
   await expect(page.getByText(/Correct/)).toBeVisible();
   await expect(page.getByText(/\+15 XP/)).toBeVisible();
   await page.getByRole('button', { name: 'Next' }).click();
   await expect(page.getByText('Card 3 of 8')).toBeVisible();
 
-  await page.getByRole('link', { name: '← End session' }).click();
+  await page.getByRole('link', { name: '← Deck' }).click();
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Home' }).click();
   await expect(page.getByText(/Level \d+ · \d+ XP/)).toBeVisible();

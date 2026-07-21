@@ -58,7 +58,7 @@ function DeckCard({ deck }: { deck: Deck }) {
           <span className="mastery-bar-fill" style={{ width: `${mastery}%` }} />
         </div>
         <p className="muted deck-card-meta">
-          {mastery}% · {deck.completedCount} / {deck.cardCount} practiced
+          {deck.completedCount} / {deck.cardCount} practiced
         </p>
       </div>
       <Link className="practice-deck-cta" to={cta.to}>
@@ -173,7 +173,7 @@ export function DecksPage({ token }: DecksPageProps) {
 
       {!loading && continueDeck && continueCta ? (
         <section className="continue-learning" aria-labelledby="continue-heading">
-          <h2 id="continue-heading" className="section-title continue-label">
+          <h2 id="continue-heading" className="decks-section-heading continue-label">
             Continue Learning
           </h2>
           <div className="continue-card">
@@ -203,8 +203,8 @@ export function DecksPage({ token }: DecksPageProps) {
                   />
                 </div>
                 <p className="muted deck-card-meta">
-                  {continueDeck.masteryPercent ?? 0}% mastery ·{' '}
-                  {continueDeck.completedCount} of {continueDeck.cardCount} practiced
+                  {continueDeck.completedCount} / {continueDeck.cardCount}{' '}
+                  practiced
                 </p>
               </div>
             </div>
@@ -252,7 +252,7 @@ export function DecksPage({ token }: DecksPageProps) {
           ) : null}
 
           <section className="stack your-decks-section" aria-labelledby="your-decks-heading">
-            <h2 id="your-decks-heading" className="section-title">
+            <h2 id="your-decks-heading" className="decks-section-heading">
               Your Decks
             </h2>
             <ul className="deck-card-grid">
@@ -262,17 +262,13 @@ export function DecksPage({ token }: DecksPageProps) {
                   className="deck-create-tile"
                   onClick={() => setCreateOpen(true)}
                 >
-                  <strong>+ Create a Deck</strong>
-                  <span className="muted">Build your own practice path</span>
+                  + Create a Deck
                 </button>
               </li>
               {yourDecks.map((d) => (
                 <DeckCard key={d.id} deck={d} />
               ))}
             </ul>
-            {yourDecks.length === 0 ? (
-              <p className="muted">No custom decks yet</p>
-            ) : null}
           </section>
         </>
       ) : null}

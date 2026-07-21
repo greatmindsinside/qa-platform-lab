@@ -57,7 +57,7 @@ export function LeaderboardPage({ token, user }: LeaderboardPageProps) {
       ) : null}
 
       {!loading && rows.length > 0 ? (
-        <div className="panel" style={{ padding: 0, overflow: 'auto' }}>
+        <div className="leaderboard-wrap">
           <table className="leaderboard-table">
             <caption className="visually-hidden">
               Learners ranked by total experience points

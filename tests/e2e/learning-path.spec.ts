@@ -27,5 +27,5 @@ test('learning path shows stage filters and Continue Learning @smoke @progressio
     .getByRole('link', { name: /Start Deck|Resume Practice|Practice Again/ })
     .click();
   await expect(page.getByText(/Card 1 of/)).toBeVisible();
-  await expect(page.getByRole('link', { name: '← End session' })).toBeVisible();
+  await expect(page.getByRole('link', { name: '← Deck' })).toBeVisible();
 });

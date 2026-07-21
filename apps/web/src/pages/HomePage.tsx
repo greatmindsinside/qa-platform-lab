@@ -1,14 +1,15 @@
 /**
- * @fileoverview Home — quiet progress + one Practice action.
+ * @fileoverview Home — large title, quiet progress, one Practice action.
  *
- * **What:** Display name, XP bar, Practice the recommended deck.
- * **Why:** Apple-like clarity; Decks/Quests live in the sidebar.
+ * **What:** Display name, XP progress, Practice the continue-learning deck.
+ * **Why:** Apple HIG clarity/deference — content first; Decks live in the sidebar.
  */
 
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Deck, PublicUser } from '@lab/shared';
 import { api } from '../lib/api';
+import { deckPrimaryCta, pickContinueLearningDeck } from '../lib/path-grouping';
 
 export type HomePageProps = {
   token: string;
@@ -50,37 +51,39 @@ export function HomePage({ token, user, onRefresh }: HomePageProps) {
   }, [token, onRefresh]);
 
   const recommended = useMemo(() => {
-    const startHere = decks.find((d) => d.recommendedStart);
-    if (startHere) return startHere;
-    const byMastery = [...decks]
-      .filter((d) => d.stage != null)
-      .sort(
-        (a, b) =>
-          (a.masteryPercent ?? 0) - (b.masteryPercent ?? 0) || a.id - b.id,
-      );
-    return byMastery[0] ?? decks[0] ?? null;
+    return (
+      pickContinueLearningDeck(decks) ??
+      decks.find((d) => d.recommendedStart) ??
+      decks.find((d) => d.stage != null) ??
+      decks[0] ??
+      null
+    );
   }, [decks]);
 
+  const practiceCta = recommended ? deckPrimaryCta(recommended) : null;
+
   return (
-    <div className="stack shell-page home-simple">
-      <header className="home-simple-hero">
-        <h1 className="home-simple-name">{user.displayName}</h1>
-        <p className="home-simple-progress muted">
-          Level {user.level} · {user.totalXp} XP · ★ {user.currentStreak}
+    <div className="stack shell-page home-apple">
+      <header className="home-apple-hero">
+        <h1 className="home-apple-title">{user.displayName}</h1>
+        <p className="home-apple-meta muted">
+          Level {user.level} · {user.totalXp} XP · Streak {user.currentStreak}
         </p>
-        <div
-          className="xp-bar home-simple-bar"
-          role="progressbar"
-          aria-valuenow={user.xpIntoLevel}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-label="XP toward next level"
-        >
-          <span style={{ width: `${user.xpIntoLevel}%` }} />
+        <div className="home-apple-progress">
+          <div
+            className="xp-bar home-apple-bar"
+            role="progressbar"
+            aria-valuenow={user.xpIntoLevel}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="XP toward next level"
+          >
+            <span style={{ width: `${user.xpIntoLevel}%` }} />
+          </div>
+          <p className="home-apple-xp-label muted">
+            {user.xpIntoLevel} / 100 to next level
+          </p>
         </div>
-        <p className="home-simple-xp-label muted">
-          {user.xpIntoLevel} / 100
-        </p>
       </header>
 
       {error ? (
@@ -94,24 +97,22 @@ export function HomePage({ token, user, onRefresh }: HomePageProps) {
         </p>
       ) : null}
 
-      {!loading && recommended ? (
-        <div className="home-simple-action">
-          <Link
-            className="practice-deck-cta practice-deck-cta-lg home-simple-practice"
-            to={`/decks/${recommended.id}/play`}
-          >
-            Practice
+      {!loading && recommended && practiceCta ? (
+        <section className="home-apple-action" aria-label="Next practice">
+          <Link className="home-apple-cta" to={practiceCta.to}>
+            {practiceCta.label}
           </Link>
-          <p className="home-simple-deck muted">{recommended.name}</p>
-        </div>
+          <p className="home-apple-deck muted">{recommended.name}</p>
+        </section>
       ) : null}
 
       {!loading && !recommended ? (
-        <div className="home-simple-action">
-          <Link className="practice-deck-cta practice-deck-cta-lg" to="/decks">
+        <section className="home-apple-action" aria-label="Next step">
+          <Link className="home-apple-cta" to="/decks">
             Decks
           </Link>
-        </div>
+          <p className="home-apple-deck muted">No decks yet</p>
+        </section>
       ) : null}
     </div>
   );

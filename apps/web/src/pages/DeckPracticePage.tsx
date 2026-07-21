@@ -10,6 +10,11 @@ import { Link, useParams } from 'react-router-dom';
 import type { Card, PracticeResult, PublicUser } from '@lab/shared';
 import { FlipCard } from '../components/FlipCard';
 import { api } from '../lib/api';
+import {
+  displayIndexForOriginal,
+  shuffleMcqOptions,
+  type McqDisplayOrder,
+} from '../lib/mcq-order';
 
 const OPTION_LABELS = ['A', 'B', 'C', 'D'] as const;
 
@@ -25,6 +30,7 @@ type SessionSummary = {
 };
 
 type McqFeedback = {
+  /** Display slot indices (A–D after shuffle). */
   selectedIndex: number;
   correct: boolean;
   correctIndex: number;
@@ -34,6 +40,16 @@ type CardResult = {
   line: string;
   xpAwarded: number;
 };
+
+function buildMcqOrders(list: Card[]): Record<number, McqDisplayOrder> {
+  const orders: Record<number, McqDisplayOrder> = {};
+  for (const c of list) {
+    if (c.kind === 'mcq' && c.options && c.options.length > 0) {
+      orders[c.id] = shuffleMcqOptions(c.options);
+    }
+  }
+  return orders;
+}
 
 /**
  * Deck play-through: grade → result → Next.
@@ -51,6 +67,9 @@ export function DeckPracticePage({ token, onUser }: DeckPracticePageProps) {
   const [instantSwap, setInstantSwap] = useState(false);
   const [mcqFeedback, setMcqFeedback] = useState<McqFeedback | null>(null);
   const [cardResult, setCardResult] = useState<CardResult | null>(null);
+  const [mcqOrders, setMcqOrders] = useState<Record<number, McqDisplayOrder>>(
+    {},
+  );
 
   const indexRef = useRef(0);
   const cardsLengthRef = useRef(0);
@@ -86,6 +105,7 @@ export function DeckPracticePage({ token, onUser }: DeckPracticePageProps) {
           return;
         }
         setCards(list);
+        setMcqOrders(buildMcqOrders(list));
         setIndex(0);
         indexRef.current = 0;
         setFlipped(false);
@@ -162,21 +182,30 @@ export function DeckPracticePage({ token, onUser }: DeckPracticePageProps) {
     }
   }
 
-  async function selectOption(selectedIndex: number) {
+  async function selectOption(displayIndex: number) {
     const card = cards[indexRef.current];
     if (!card || practiceLockRef.current || cardResult) return;
+    const order = mcqOrders[card.id];
+    const originalIndex = order?.toOriginal[displayIndex] ?? displayIndex;
     practiceLockRef.current = true;
     setError('');
     setBusy(true);
     try {
-      const res = await api.practiceMcq(token, card.id, selectedIndex);
+      const res = await api.practiceMcq(token, card.id, originalIndex);
       const correct = res.correct ?? false;
-      const correctIndex = res.correctIndex ?? 0;
-      setMcqFeedback({ selectedIndex, correct, correctIndex });
+      const correctOriginal = res.correctIndex ?? 0;
+      const correctDisplay = order
+        ? displayIndexForOriginal(order.toOriginal, correctOriginal)
+        : correctOriginal;
+      setMcqFeedback({
+        selectedIndex: displayIndex,
+        correct,
+        correctIndex: correctDisplay >= 0 ? correctDisplay : correctOriginal,
+      });
       const verdict = correct ? 'Correct' : 'Incorrect';
       const key = correct
         ? ''
-        : ` · answer ${OPTION_LABELS[correctIndex] ?? correctIndex}`;
+        : ` · answer ${OPTION_LABELS[correctDisplay] ?? correctOriginal}`;
       await afterPractice(res, {
         xpAwarded: res.xpAwarded,
         line: `${verdict}${key} · +${res.xpAwarded} XP`,
@@ -197,6 +226,7 @@ export function DeckPracticePage({ token, onUser }: DeckPracticePageProps) {
       setFlipped(false);
       setMcqFeedback(null);
       setCardResult(null);
+      setMcqOrders(buildMcqOrders(cards));
       setError('');
       setInstantSwap(false);
       practiceLockRef.current = false;
@@ -207,23 +237,22 @@ export function DeckPracticePage({ token, onUser }: DeckPracticePageProps) {
 
     return (
       <div className="stack shell-page">
-        <div className="panel stack practice-panel session-complete">
-          <p className="session-complete-label">Session complete</p>
-          <h1 className="brand practice-title">{deckName}</h1>
+        <div className="stack practice-surface session-complete">
+          <p className="page-section-heading">Session complete</p>
+          <h1 className="page-title">{deckName}</h1>
           <p className="session-xp-big">+{summary.xpEarned} XP</p>
-          <p className="practice-result">
+          <p className="muted practice-result">
             {summary.cardsPracticed} card
             {summary.cardsPracticed === 1 ? '' : 's'} practiced · streak{' '}
             {summary.streak}
           </p>
           <div className="row session-complete-actions">
-            <button type="button" className="practice-cta-link" onClick={restartSession}>
+            <button type="button" className="home-apple-cta" onClick={restartSession}>
               Practice again
             </button>
             <Link className="text-link" to={`/decks/${deckId}`}>
               Back to deck
             </Link>
-            <Link to="/">Home</Link>
           </div>
         </div>
       </div>
@@ -271,50 +300,51 @@ export function DeckPracticePage({ token, onUser }: DeckPracticePageProps) {
 
   return (
     <div className="stack shell-page">
-      <div className="panel stack practice-panel">
+      <div className="stack practice-surface">
         <div className="row" style={{ justifyContent: 'space-between' }}>
-          <Link className="practice-back" to={`/decks/${deckId}`}>
-            ← End session
+          <Link className="practice-back text-link" to={`/decks/${deckId}`}>
+            ← Deck
           </Link>
-          <p className="practice-progress" aria-live="polite">
+          <p className="muted practice-progress" aria-live="polite">
             Card {position} of {total}
           </p>
         </div>
 
         <div
-          className="session-progress"
+          className="mastery-bar session-progress-bar"
           role="progressbar"
           aria-valuenow={progressPct}
           aria-valuemin={0}
           aria-valuemax={100}
           aria-label="Session progress"
         >
-          <span style={{ width: `${progressPct}%` }} />
+          <span className="mastery-bar-fill" style={{ width: `${progressPct}%` }} />
         </div>
 
-        <h1 className="brand practice-title">
+        <h1 className="page-title practice-title">
           {deckName || 'Practice'}
-          {isMcq ? ' · MCQ' : ''}
         </h1>
 
         {isMcq ? (
           <>
             <p className="practice-prompt">{card.prompt}</p>
             <div className="mcq-options" role="group" aria-label="Answer options">
-              {(card.options ?? []).map((opt, optIndex) => (
-                <button
-                  key={OPTION_LABELS[optIndex]}
-                  type="button"
-                  className={mcqOptionClass(optIndex)}
-                  disabled={answeringLocked}
-                  onClick={() => void selectOption(optIndex)}
-                >
-                  <span className="mcq-option-letter">
-                    {OPTION_LABELS[optIndex]}
-                  </span>
-                  <span className="mcq-option-text">{opt}</span>
-                </button>
-              ))}
+              {(mcqOrders[card.id]?.displayOptions ?? card.options ?? []).map(
+                (opt, optIndex) => (
+                  <button
+                    key={`${card.id}-${optIndex}-${opt}`}
+                    type="button"
+                    className={mcqOptionClass(optIndex)}
+                    disabled={answeringLocked}
+                    onClick={() => void selectOption(optIndex)}
+                  >
+                    <span className="mcq-option-letter">
+                      {OPTION_LABELS[optIndex]}
+                    </span>
+                    <span className="mcq-option-text">{opt}</span>
+                  </button>
+                ),
+              )}
             </div>
           </>
         ) : (
@@ -363,6 +393,9 @@ export function DeckPracticePage({ token, onUser }: DeckPracticePageProps) {
             <p className="practice-result" role="status">
               {cardResult.line}
             </p>
+            {isMcq && card.answerHint ? (
+              <p className="muted practice-mcq-explain">{card.answerHint}</p>
+            ) : null}
             <button type="button" onClick={goNext}>
               {isLast ? 'Finish' : 'Next'}
             </button>

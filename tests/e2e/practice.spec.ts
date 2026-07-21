@@ -28,7 +28,7 @@ test('practice deck advances with Next @smoke @progression', async ({
   await expect(page.getByText('Card 2 of 8')).toBeVisible();
   await expect(page.getByText('Card 3 of 8')).toHaveCount(0);
 
-  await page.getByRole('link', { name: '← End session' }).click();
+  await page.getByRole('link', { name: '← Deck' }).click();
   await expect(
     page.getByRole('heading', { name: CURRICULUM_DECKS.foundations }),
   ).toBeVisible();

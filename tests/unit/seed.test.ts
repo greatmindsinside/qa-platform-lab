@@ -74,10 +74,54 @@ describe('seed curriculum', () => {
   it('is idempotent when curriculum already exists', async () => {
     const db = openMemoryDb();
     await seedDatabase(db);
+    const decks = new DeckStore(db);
+    const admin = new UserStore(db).findByEmail(SEED_USERS.admin.email)!;
+    const before = decks
+      .listDecksForUser(admin.id)
+      .map((d) => ({ id: d.id, count: decks.listCards(d.id).length }));
+    await seedDatabase(db);
+    expect(decks.listDecksForUser(admin.id)).toHaveLength(3);
+    for (const row of before) {
+      expect(decks.listCards(row.id)).toHaveLength(row.count);
+    }
+  });
+
+  it('backfills new senior cards onto an already-seeded expert deck', async () => {
+    const db = openMemoryDb();
     await seedDatabase(db);
     const decks = new DeckStore(db);
     const admin = new UserStore(db).findByEmail(SEED_USERS.admin.email)!;
-    expect(decks.listDecksForUser(admin.id)).toHaveLength(3);
+    const strategy = decks
+      .listDecksForUser(admin.id)
+      .find((d) => d.name === CURRICULUM_DECKS.strategy)!;
+    const seniorPrompt =
+      'How would you measure whether the QA strategy is working for the org?';
+    expect(
+      decks.listCards(strategy.id).some((c) => c.prompt === seniorPrompt),
+    ).toBe(true);
+    expect(decks.listCards(strategy.id).length).toBeGreaterThanOrEqual(16);
+  });
+
+  it('syncs clearer answer hints and renames corrected prompts on re-seed', async () => {
+    const db = openMemoryDb();
+    await seedDatabase(db);
+    const decks = new DeckStore(db);
+    const admin = new UserStore(db).findByEmail(SEED_USERS.admin.email)!;
+    const foundations = decks
+      .listDecksForUser(admin.id)
+      .find((d) => d.name === CURRICULUM_DECKS.foundations)!;
+
+    const pyramid = decks
+      .listCards(foundations.id)
+      .find((c) => c.prompt.startsWith('What is the test pyramid'));
+    expect(pyramid?.answer_hint).toMatch(/unit tests at the base/i);
+
+    const locatorMcq = decks
+      .listCards(foundations.id)
+      .find((c) => c.prompt.includes('locating elements for assertions'));
+    expect(locatorMcq?.kind).toBe('mcq');
+    expect(locatorMcq?.answer_hint.length).toBeGreaterThan(20);
+    expect(decks.listCards(foundations.id)).toHaveLength(8);
   });
 
   it('removes legacy demo decks on upgrade when curriculum already exists', async () => {

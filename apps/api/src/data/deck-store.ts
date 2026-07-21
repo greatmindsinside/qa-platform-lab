@@ -188,4 +188,24 @@ export class DeckStore {
       .prepare(`SELECT * FROM cards WHERE deck_id = ? ORDER BY id`)
       .all(deckId) as CardRow[];
   }
+
+  /** Sync study/explanation text for an existing card (seed upgrades). */
+  updateCardAnswerHint(cardId: number, answerHint: string): void {
+    this.db
+      .prepare(`UPDATE cards SET answer_hint = ? WHERE id = ?`)
+      .run(answerHint, cardId);
+  }
+
+  /** Rename a card prompt within a deck (seed prompt corrections). */
+  renameCardPrompt(
+    deckId: number,
+    fromPrompt: string,
+    toPrompt: string,
+  ): void {
+    this.db
+      .prepare(
+        `UPDATE cards SET prompt = ? WHERE deck_id = ? AND prompt = ?`,
+      )
+      .run(toPrompt, deckId, fromPrompt);
+  }
 }

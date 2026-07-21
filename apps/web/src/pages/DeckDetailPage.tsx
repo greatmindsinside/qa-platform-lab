@@ -16,6 +16,7 @@ import type {
   Role,
 } from '@lab/shared';
 import { api } from '../lib/api';
+import { deckPrimaryCta } from '../lib/path-grouping';
 
 export type DeckDetailPageProps = {
   token: string;
@@ -25,31 +26,8 @@ export type DeckDetailPageProps = {
 
 const EMPTY_OPTIONS: [string, string, string, string] = ['', '', '', ''];
 
-function MasteryRing({ percent }: { percent: number }) {
-  const p = Math.max(0, Math.min(100, percent));
-  const style = {
-    background: `conic-gradient(var(--shell-mastery) ${p * 3.6}deg, rgba(255,255,255,0.08) 0)`,
-  };
-  return (
-    <div
-      className="mastery-ring"
-      style={style}
-      role="progressbar"
-      aria-valuenow={p}
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-label="Deck mastery"
-    >
-      <div className="mastery-ring-inner">
-        <strong>{p}%</strong>
-        <span>MASTERY</span>
-      </div>
-    </div>
-  );
-}
-
 /**
- * Deck hub: name + mastery, contents grid, practice + management rail.
+ * Deck hub: name + mastery, contents list, practice + management.
  */
 export function DeckDetailPage({
   token,
@@ -190,30 +168,41 @@ export function DeckDetailPage({
   const stageLabel = deck.stage
     ? deck.stage.charAt(0).toUpperCase() + deck.stage.slice(1)
     : 'Custom';
+  const playCta = deckPrimaryCta(deck);
 
   return (
-    <div className="deck-dashboard">
+    <div className="deck-dashboard shell-page">
       <div className="deck-dashboard-main stack">
-          <section className="active-quest panel">
-            <div className="active-quest-body">
-              <div className="active-quest-meta">
-                <span className="muted">
-                  {deck.recommendedStart
-                    ? 'Start here'
-                    : `${stageLabel} path`}
-                </span>
+          <header className="deck-detail-hero stack-sm">
+            <p className="muted deck-detail-stage">{stageLabel}</p>
+            <h1 className="page-title deck-detail-title">{deck.name}</h1>
+            {deck.description ? (
+              <p className="muted deck-detail-desc">{deck.description}</p>
+            ) : null}
+            <div className="deck-card-progress">
+              <div
+                className="mastery-bar"
+                role="progressbar"
+                aria-valuenow={mastery}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="Deck mastery"
+              >
+                <span
+                  className="mastery-bar-fill"
+                  style={{ width: `${mastery}%` }}
+                />
               </div>
-              <h1 className="active-quest-title">{deck.name}</h1>
-              {deck.description ? (
-                <p className="active-quest-desc">{deck.description}</p>
-              ) : null}
+              <p className="muted deck-card-meta">
+                {cards.length} cards · {deck.completedCount} / {deck.cardCount}{' '}
+                practiced
+              </p>
             </div>
-            <MasteryRing percent={mastery} />
-          </section>
+          </header>
 
           <section className="deck-contents stack-sm">
             <div className="deck-contents-head row">
-              <h2 className="section-title" style={{ margin: 0 }}>
+              <h2 className="page-section-heading">
                 Cards (
                   {cardQuery.trim()
                     ? `${filtered.length} of ${cards.length}`
@@ -239,19 +228,14 @@ export function DeckDetailPage({
                   : 'No cards match your search.'}
               </p>
             ) : (
-              <ul className="quest-card-grid">
+              <ul className="deck-card-list">
                 {filtered.map((c) => (
-                  <li key={c.id}>
-                    <Link
-                      to={`/practice/${c.id}`}
-                      className={`quest-card quest-card-${c.kind}`}
-                    >
-                      <div className="quest-card-top">
-                        <span className={`deck-badge deck-badge-${c.kind}`}>
-                          {c.kind === 'mcq' ? 'MCQ' : 'OPEN'}
-                        </span>
-                      </div>
-                      <strong className="quest-card-title">
+                  <li key={c.id} className="deck-card-list-item">
+                    <Link to={`/practice/${c.id}`} className="deck-card-list-link">
+                      <span className="muted deck-card-list-kind">
+                        {c.kind === 'mcq' ? 'Choice' : 'Open'}
+                      </span>
+                      <strong className="deck-card-list-title">
                         {c.prompt.length > 72
                           ? `${c.prompt.slice(0, 72)}…`
                           : c.prompt}
@@ -273,21 +257,15 @@ export function DeckDetailPage({
 
         <aside className="deck-rail stack">
           {cards.length > 0 ? (
-            <Link
-              className="start-practice-cta"
-              to={`/decks/${deckId}/play`}
-            >
-              <span className="start-practice-copy">
-                <strong>Practice</strong>
-                <small>Full deck session</small>
-              </span>
+            <Link className="home-apple-cta deck-rail-cta" to={playCta.to}>
+              {playCta.label}
             </Link>
           ) : (
-            <p className="muted rail-card">Add cards to enable practice.</p>
+            <p className="muted">Add cards to enable practice.</p>
           )}
 
-          <div className="rail-card stack-sm">
-            <h3 className="rail-heading">Deck Management</h3>
+          <div className="stack-sm deck-rail-block">
+            <h3 className="page-section-heading">Deck management</h3>
             {isDeckAdmin ? (
               <>
                 <button
@@ -350,8 +328,8 @@ export function DeckDetailPage({
                         value={kind}
                         onChange={(e) => setKind(e.target.value as CardKind)}
                       >
-                        <option value="open">open</option>
-                        <option value="mcq">mcq</option>
+                        <option value="open">Open</option>
+                        <option value="mcq">Choice</option>
                       </select>
                     </label>
                     <label>

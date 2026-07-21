@@ -40,10 +40,8 @@ export function SupportPage({ token }: SupportPageProps) {
         <h1 className="page-title">Support</h1>
       </header>
 
-      <section className="panel stack">
-        <h2 className="section-title" style={{ margin: 0 }}>
-          Contact
-        </h2>
+      <section className="stack settings-block">
+        <h2 className="page-section-heading">Contact</h2>
         <form className="stack" onSubmit={submit}>
           <label>
             Subject

@@ -51,10 +51,8 @@ export function SettingsPage({
         <h1 className="page-title">Settings</h1>
       </header>
 
-      <section className="panel stack">
-        <h2 className="section-title" style={{ margin: 0 }}>
-          Profile
-        </h2>
+      <section className="stack settings-block">
+        <h2 className="page-section-heading">Profile</h2>
         <form className="stack" onSubmit={saveProfile}>
           <label>
             Email
@@ -90,10 +88,8 @@ export function SettingsPage({
         </form>
       </section>
 
-      <section className="panel stack">
-        <h2 className="section-title" style={{ margin: 0 }}>
-          Session
-        </h2>
+      <section className="stack settings-block">
+        <h2 className="page-section-heading">Session</h2>
         <button type="button" className="secondary" onClick={onSignOut}>
           Sign out
         </button>

@@ -19,7 +19,11 @@ test('login page @smoke @auth', async ({ page, loginAs }) => {
     page.getByRole('heading', { name: SEED_USERS.member.displayName }),
   ).toBeVisible();
   await expect(page.getByText(/Level \d+ · \d+ XP/)).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Practice' })).toBeVisible();
+  await expect(
+    page.getByRole('link', {
+      name: /Start Deck|Resume Practice|Practice Again|Practice/,
+    }),
+  ).toBeVisible();
   await expect(page.getByText(CURRICULUM_DECKS.foundations)).toBeVisible();
 
   await page

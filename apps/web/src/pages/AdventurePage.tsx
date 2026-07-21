@@ -145,17 +145,22 @@ export function AdventurePage({ token, onUser }: AdventurePageProps) {
 
   return (
     <div className="adventure-shell stack shell-page">
-      <div className="row" style={{ justifyContent: 'flex-end' }}>
-        {summary ? (
+      <div className="row" style={{ justifyContent: 'space-between' }}>
+        <Link className="text-link" to="/">
+          ← Home
+        </Link>
+        {summary && !scene?.isEnding ? (
           <button
             type="button"
-            className="secondary"
+            className="text-link"
             onClick={() => void onRestart()}
             disabled={busy}
           >
             Restart
           </button>
-        ) : null}
+        ) : (
+          <span />
+        )}
       </div>
 
       {undoSnapshot ? (
@@ -174,7 +179,7 @@ export function AdventurePage({ token, onUser }: AdventurePageProps) {
 
       {summary ? (
         <header className="adventure-header stack-sm">
-          <p className="brand adventure-brand">{summary.title}</p>
+          <h1 className="page-title">{summary.title}</h1>
           <p className="muted" style={{ margin: 0 }}>
             {summary.blurb}
           </p>
@@ -188,12 +193,12 @@ export function AdventurePage({ token, onUser }: AdventurePageProps) {
       ) : null}
 
       {scene ? (
-        <article className="adventure-scene panel stack">
+        <article className="adventure-scene stack">
           <p className="adventure-prose">{scene.body}</p>
 
           {scene.isEnding ? (
             <div className="adventure-summary stack-sm">
-              <h2 className="section-title">What you practiced</h2>
+              <h2 className="page-section-heading">What you practiced</h2>
               <ul className="adventure-takeaways">
                 {(scene.takeaways ?? []).map((t) => (
                   <li key={t.id}>{t.label}</li>
@@ -207,13 +212,10 @@ export function AdventurePage({ token, onUser }: AdventurePageProps) {
                     : ''}
                 </p>
               ) : null}
-              <div className="row" style={{ flexWrap: 'wrap' }}>
-                <Link className="practice-deck-cta" to="/">
-                  Back to Home
-                </Link>
+              <div className="stack-sm">
                 <button
                   type="button"
-                  className="secondary"
+                  className="home-apple-cta"
                   onClick={() => void onRestart()}
                   disabled={busy}
                 >

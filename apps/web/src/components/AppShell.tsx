@@ -67,7 +67,7 @@ export function AppShell({
         <div className="shell-top-actions" aria-label="Progress summary">
           <span className="shell-stat">{user.totalXp} XP</span>
           <span className="shell-stat shell-stat-title">{user.title}</span>
-          <span className="shell-stat">★ {user.currentStreak}</span>
+          <span className="shell-stat">Streak {user.currentStreak}</span>
           <button type="button" className="shell-signout" onClick={onSignOut}>
             Sign out
           </button>
