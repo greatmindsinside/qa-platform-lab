@@ -27,8 +27,15 @@ test('login page @smoke @auth', async ({ page, loginAs }) => {
     .getByRole('link', { name: 'Decks' })
     .click();
   await expect(page.getByRole('heading', { name: 'Decks', exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Beginner' })).toBeVisible();
-  await expect(page.getByText(CURRICULUM_DECKS.foundations)).toBeVisible();
-  await expect(page.getByText(CURRICULUM_DECKS.applied)).toBeVisible();
-  await expect(page.getByText(CURRICULUM_DECKS.strategy)).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'All Decks' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Beginner' })).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: CURRICULUM_DECKS.foundations, exact: true }).first(),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: CURRICULUM_DECKS.applied, exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: CURRICULUM_DECKS.strategy, exact: true }),
+  ).toBeVisible();
 });
