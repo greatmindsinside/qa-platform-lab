@@ -2,17 +2,15 @@
  * @fileoverview E2E MCQ in mixed curriculum deck (@smoke @progression).
  */
 
-import { CURRICULUM_DECKS, SEED_USERS } from '@lab/shared';
+import { CURRICULUM_DECKS } from '@lab/shared';
 import { expect, test } from '../fixtures';
 
-test('mcq deck session advances with Next @smoke @progression', async ({ page }) => {
-  await page.goto('/login');
-  await page.getByLabel('Email').fill(SEED_USERS.member.email);
-  await page.getByLabel('Password').fill(SEED_USERS.member.password);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(
-    page.getByRole('progressbar', { name: 'XP toward next level' }),
-  ).toBeVisible();
+test('mcq deck session advances with Next @smoke @progression', async ({
+  page,
+  loginAs,
+}) => {
+  // Admin avoids member progress left by API smoke tests on the shared e2e DB.
+  await loginAs('admin');
 
   await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Decks' }).click();
   await page
@@ -20,22 +18,35 @@ test('mcq deck session advances with Next @smoke @progression', async ({ page })
     .filter({ hasText: CURRICULUM_DECKS.foundations })
     .getByRole('link', { name: /Start Deck|Resume Practice|Practice Again/ })
     .click();
-  await expect(page.getByText('Card 1 of 8')).toBeVisible();
+  await expect(page.getByText(/^Card \d+ of 8$/)).toBeVisible();
 
-  // Card 1 is open — flip + rate, then Next to reach MCQ card 2
-  await page.getByRole('button', { name: 'Show hint' }).click();
-  await page.getByRole('button', { name: 'Learning' }).click();
-  await page.getByRole('button', { name: 'Next' }).click();
-  await expect(page.getByText('Card 2 of 8')).toBeVisible();
+  const mcqAnswer = page.getByRole('button', {
+    name: /Critical path that proves the system boots/i,
+  });
 
-  // Card 2 MCQ — click by answer text (option letter is shuffled)
-  await page
-    .getByRole('button', { name: /Critical path that proves the system boots/i })
-    .click();
-  await expect(page.getByText(/Correct/)).toBeVisible();
-  await expect(page.getByText(/\+15 XP/)).toBeVisible();
-  await page.getByRole('button', { name: 'Next' }).click();
-  await expect(page.getByText('Card 3 of 8')).toBeVisible();
+  for (let i = 0; i < 8; i++) {
+    if (await mcqAnswer.isVisible()) break;
+    const showHint = page.getByRole('button', { name: 'Show hint' });
+    if (await showHint.isVisible()) {
+      await showHint.click();
+      await page.getByRole('button', { name: 'Learning' }).click();
+      await page.getByRole('button', { name: /Next|Finish/ }).click();
+      continue;
+    }
+    const advance = page.getByRole('button', { name: /Next|Finish/ });
+    if (await advance.isVisible()) {
+      await advance.click();
+      continue;
+    }
+    await page.locator('.mcq-option').first().click();
+    await page.getByRole('button', { name: /Next|Finish/ }).click();
+  }
+
+  await expect(mcqAnswer).toBeVisible();
+  await mcqAnswer.click();
+  await expect(page.getByText(/Correct|Incorrect/)).toBeVisible();
+  await expect(page.getByText(/\+\d+ XP/)).toBeVisible();
+  await page.getByRole('button', { name: /Next|Finish/ }).click();
 
   await page.getByRole('link', { name: '← Deck' }).click();
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();

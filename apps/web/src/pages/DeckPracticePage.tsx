@@ -15,6 +15,7 @@ import {
   shuffleMcqOptions,
   type McqDisplayOrder,
 } from '../lib/mcq-order';
+import { resumePracticeIndex } from '../lib/path-grouping';
 
 const OPTION_LABELS = ['A', 'B', 'C', 'D'] as const;
 
@@ -106,8 +107,9 @@ export function DeckPracticePage({ token, onUser }: DeckPracticePageProps) {
         }
         setCards(list);
         setMcqOrders(buildMcqOrders(list));
-        setIndex(0);
-        indexRef.current = 0;
+        const start = resumePracticeIndex(list);
+        setIndex(start);
+        indexRef.current = start;
         setFlipped(false);
         setMcqFeedback(null);
         setCardResult(null);

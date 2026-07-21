@@ -118,6 +118,8 @@ export type Card = {
   tags: string[];
   /** Present when kind is mcq; exactly four strings in stored order. */
   options?: [string, string, string, string];
+  /** Caller's progress on this card; null if never practiced. */
+  confidence: Confidence | null;
 };
 
 export type DeckMember = {

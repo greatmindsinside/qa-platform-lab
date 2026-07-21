@@ -233,7 +233,11 @@ export function DeckDetailPage({
                   <li key={c.id} className="deck-card-list-item">
                     <Link to={`/practice/${c.id}`} className="deck-card-list-link">
                       <span className="muted deck-card-list-kind">
-                        {c.kind === 'mcq' ? 'Choice' : 'Open'}
+                        {c.confidence
+                          ? c.confidence
+                          : c.kind === 'mcq'
+                            ? 'Choice'
+                            : 'Open'}
                       </span>
                       <strong className="deck-card-list-title">
                         {c.prompt.length > 72

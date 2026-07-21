@@ -90,7 +90,12 @@ describe('api quest deck', () => {
       url: `/api/decks/${decks[0]!.id}/cards`,
       headers: { authorization: `Bearer ${token}` },
     });
-    const cards = cardsRes.json() as Array<{ id: number }>;
+    const cards = cardsRes.json() as Array<{
+      id: number;
+      confidence: string | null;
+    }>;
+    expect(cards[0]?.confidence).toBeNull();
+
     const practice = await app.inject({
       method: 'POST',
       url: `/api/cards/${cards[0]!.id}/practice`,
@@ -105,6 +110,29 @@ describe('api quest deck', () => {
       xpIntoLevel: 10,
       xpToNextLevel: 90,
     });
+
+    const cardsAfter = await app.inject({
+      method: 'GET',
+      url: `/api/decks/${decks[0]!.id}/cards`,
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const practiced = cardsAfter.json() as Array<{
+      id: number;
+      confidence: string | null;
+    }>;
+    expect(practiced.find((c) => c.id === cards[0]!.id)?.confidence).toBe(
+      'learning',
+    );
+
+    const decksAfter = await app.inject({
+      method: 'GET',
+      url: '/api/decks',
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const deckAfter = (
+      decksAfter.json() as Array<{ id: number; completedCount: number }>
+    ).find((d) => d.id === decks[0]!.id);
+    expect(deckAfter?.completedCount).toBeGreaterThanOrEqual(1);
 
     const improve = await app.inject({
       method: 'POST',

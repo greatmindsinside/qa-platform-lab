@@ -36,11 +36,11 @@ These are **public demo secrets** for the portfolio lab—not production credent
 
 ## Adventure (story mode)
 
-Home also shows **Adventure** — a short choice-driven story (**Flaky Friday**) that teaches QA judgment (flakes, severity, evidence). Separate from deck Practice.
+Sidebar **Quests** opens a short choice-driven story (**Flaky Friday**) that teaches QA judgment (flakes, severity, evidence). Separate from deck Practice.
 
-1. **Start adventure** → read the scene → tap a choice (no command parser).  
-2. Leave mid-run → **Continue** resumes the same scene.  
-3. Finish → see **What you practiced** takeaways → Home.  
+1. Open **Quests** → read the scene → tap a choice (no command parser).  
+2. Leave mid-run → return and **Restart** / **Undo** as needed.  
+3. Finish → see **What you practiced** takeaways → **← Home**.  
 4. First completion awards **+25 XP** and counts as a practice day for streak; **replay** is allowed for learning but awards **+0 XP**.
 
 Design: [`specs/005-qa-adventure/`](../specs/005-qa-adventure/).
@@ -59,24 +59,27 @@ Custom decks you create appear under **Your decks** (no stage) and stay outside 
 
 ### One short session
 
-1. Sign in → find the **Start here** badge on **QA Foundations**.  
-2. Click **Practice** → flip open cards / pick A–D on MCQ → auto-advance.  
-3. End session or finish the deck → Home XP/streak update.
+1. Sign in → open **Decks** (or Home **Practice**).  
+2. On **QA Foundations**, click **Start Deck** or **Resume Practice**.  
+3. Flip open cards / pick A–D on choice cards → **Next** after each grade.  
+4. Leave with **← Deck** anytime — progress is saved; resume skips practiced cards.  
+5. Finish the remaining cards → session summary → Home XP/streak update.
 
 ### Multi-day use
 
 - Day 1–2: Beginner foundations  
 - Next: Intermediate applied scenarios  
 - Later: Expert strategy / STAR leadership  
-You can open Expert anytime — the path recommends order; it does not lock it.
+You can open Expert anytime — the path recommends order; it does not lock it. Each deck keeps its own practiced counts.
 
 ## First prep session (happy path)
 
 1. Sign in as **admin** or **member**.  
-2. On **Home**, note XP bar, streak, stage sections, and **Start here**.  
-3. **Practice** on **QA Foundations** (or any stage).  
-4. **Open cards:** flip / **Show hint**, then rate confidence. **MCQ:** A–D with instant feedback.  
-5. Session summary → Home.
+2. On **Home**, note XP bar, streak, and the primary **Practice** / **Resume Practice** action.  
+3. Open **Decks** → **Continue Learning** or **QA Foundations**.  
+4. **Open cards:** flip / **Show hint**, then rate confidence. **Choice cards:** A–D with instant feedback.  
+5. Leave mid-deck → return via **Resume Practice** (starts at the first unpracticed card).  
+6. Session summary → Home.
 
 Tip: One short session per day keeps the streak.
 

@@ -126,7 +126,9 @@ export class DeckService {
 
   listCards(userId: number, deckId: number): Card[] {
     this.requireMembership(deckId, userId);
-    return this.decks.listCards(deckId).map(mapCard);
+    const rows = this.decks.listCards(deckId);
+    const confidences = this.progress.listConfidencesForDeck(userId, deckId);
+    return rows.map((row, i) => mapCard(row, confidences[i] ?? null));
   }
 
   /** Create open or MCQ card (membership admin only). Edit/delete out of MVP. */

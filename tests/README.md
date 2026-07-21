@@ -31,9 +31,10 @@ Shared Playwright fixtures: [`fixtures.ts`](./fixtures.ts) (`api`, `asAdmin`, `a
 | ---- | -------------- | ------------- |
 | Membership RBAC | Wrong authz → data loss / privilege bugs | [`unit/rbac.test.ts`](./unit/rbac.test.ts), [`api/rbac-delete.spec.ts`](./api/rbac-delete.spec.ts) |
 | XP / streak progression | Core product rules; easy to regress silently | [`unit/progression.test.ts`](./unit/progression.test.ts), [`api/practice-xp.spec.ts`](./api/practice-xp.spec.ts), [`e2e/practice.spec.ts`](./e2e/practice.spec.ts) |
+| Per-deck progress + resume | Resume must skip practiced cards; counts stay per deck | [`unit/path-grouping.test.ts`](./unit/path-grouping.test.ts), [`unit/api-quest-deck.test.ts`](./unit/api-quest-deck.test.ts), [`e2e/practice.spec.ts`](./e2e/practice.spec.ts) |
 | MCQ grading + XP | Wrong answer must still award +5 XP | [`unit/mcq-grading.test.ts`](./unit/mcq-grading.test.ts), [`api/mcq-practice.spec.ts`](./api/mcq-practice.spec.ts), [`e2e/mcq-practice.spec.ts`](./e2e/mcq-practice.spec.ts) |
 | Auth / session | Everything else depends on login | [`api/auth.spec.ts`](./api/auth.spec.ts), [`e2e/login.spec.ts`](./e2e/login.spec.ts) |
-| Learning path UX | Soft Beginner→Expert curriculum on Home | [`unit/path-grouping.test.ts`](./unit/path-grouping.test.ts), [`e2e/learning-path.spec.ts`](./e2e/learning-path.spec.ts) |
+| Learning path / Decks UX | Soft Beginner→Expert curriculum + dashboard | [`unit/path-grouping.test.ts`](./unit/path-grouping.test.ts), [`e2e/learning-path.spec.ts`](./e2e/learning-path.spec.ts) |
 | Invite → visibility | Cross-layer: API write + UI read | [`cross-layer/invite.spec.ts`](./cross-layer/invite.spec.ts) |
 
 ## Commands

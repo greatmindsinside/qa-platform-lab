@@ -5,7 +5,7 @@
  * **Why:** Soft curriculum guidance without a Path entity (003).
  */
 
-import type { Deck, LearningStage } from '@lab/shared';
+import type { Deck, LearningStage, Confidence } from '@lab/shared';
 
 export const STAGE_ORDER: LearningStage[] = [
   'beginner',
@@ -79,6 +79,14 @@ export function deckPrimaryCta(deck: Deck): {
   if (mastery >= 100) return { label: 'Practice Again', to };
   if ((deck.completedCount ?? 0) > 0) return { label: 'Resume Practice', to };
   return { label: 'Start Deck', to };
+}
+
+/** Index of the first unpracticed card; 0 when none left (full review). */
+export function resumePracticeIndex(
+  cards: Array<{ confidence?: Confidence | null }>,
+): number {
+  const firstUnpracticed = cards.findIndex((c) => c.confidence == null);
+  return firstUnpracticed === -1 ? 0 : firstUnpracticed;
 }
 
 /** Path decks for all/stage tabs; custom decks for yours. */

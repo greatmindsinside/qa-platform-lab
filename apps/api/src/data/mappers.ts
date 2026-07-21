@@ -35,7 +35,10 @@ import type { CardRow, DeckRow } from './deck-store.js';
 import type { UserRow } from './user-store.js';
 
 /** Map a card row to the public Card DTO (never includes correctIndex). */
-export function mapCard(row: CardRow): Card {
+export function mapCard(
+  row: CardRow,
+  confidence: Confidence | null = null,
+): Card {
   const base: Card = {
     id: row.id,
     deckId: row.deck_id,
@@ -43,6 +46,7 @@ export function mapCard(row: CardRow): Card {
     prompt: row.prompt,
     answerHint: row.answer_hint,
     tags: JSON.parse(row.tags_json) as string[],
+    confidence,
   };
   if (base.kind === 'mcq' && row.options_json) {
     const options = JSON.parse(row.options_json) as string[];

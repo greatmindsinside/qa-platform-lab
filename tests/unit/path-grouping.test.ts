@@ -9,6 +9,7 @@ import {
   pickContinueLearningDeck,
   deckPrimaryCta,
   filterDecksByTab,
+  resumePracticeIndex,
 } from '../../apps/web/src/lib/path-grouping.ts';
 
 function deck(
@@ -179,5 +180,42 @@ describe('filterDecksByTab', () => {
     expect(filterDecksByTab(decks, 'yours').map((d) => d.name)).toEqual([
       'Mine',
     ]);
+  });
+});
+
+describe('resumePracticeIndex', () => {
+  it('starts at first unpracticed card', () => {
+    expect(
+      resumePracticeIndex([
+        { confidence: 'learning' },
+        { confidence: 'solid' },
+        { confidence: null },
+        { confidence: null },
+      ]),
+    ).toBe(2);
+  });
+
+  it('starts at 0 when none practiced or all practiced', () => {
+    expect(
+      resumePracticeIndex([
+        { confidence: null },
+        { confidence: null },
+      ]),
+    ).toBe(0);
+    expect(
+      resumePracticeIndex([
+        { confidence: 'learning' },
+        { confidence: 'mastered' },
+      ]),
+    ).toBe(0);
+  });
+
+  it('skips practiced cards even when later cards remain', () => {
+    expect(
+      resumePracticeIndex([
+        { confidence: 'solid' },
+        { confidence: null },
+      ]),
+    ).toBe(1);
   });
 });
